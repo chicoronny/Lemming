@@ -24,7 +24,7 @@ public class ImageJTIFFLoaderTest {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
-		tif = new ImageJTIFFLoader("/home/ronny/Bilder/TubulinAF647.tif");
+		tif = new ImageJTIFFLoader("/Users/ronny/Documents/TubulinAF647.tif");
 
 		frames = new FastStore<Frame>();
 		
@@ -33,8 +33,10 @@ public class ImageJTIFFLoaderTest {
 
 	@Test
 	public void test() {
+		long start = System.currentTimeMillis();
 		tif.run();
-
+		long end = System.currentTimeMillis();
+		System.out.println("Time eleapsed: "+ (end-start));
 		assertEquals(9990, frames.getLength());		
 		
 		tif.show();

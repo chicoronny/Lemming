@@ -57,7 +57,7 @@ public class PeakFinder<T extends RealType<T>, F extends Frame<T>> extends Singl
 			System.out.println("Frames finished:"+frame.getFrameNumber());
 	}
 	
-	private void process1(Frame<T> frame) {
+	private void process1(F frame) {
 		
 		Interval interval = Intervals.expand( frame.getPixels(), -size );
 		
@@ -94,11 +94,6 @@ public class PeakFinder<T extends RealType<T>, F extends Frame<T>> extends Singl
 		    if (isMaximum)
 		    	output.put(new XYFLocalization(frame.getFrameNumber(), center.getIntPosition(0), center.getIntPosition(1)));
 		}
-		
-		//for now just print the results to the console
-		//List<Integer> localMax = new ArrayList<Integer>();
-				
-		//System.out.println(Long.toString(frameNo)+":"+localMax.toString());
 	}
 		
 	/**

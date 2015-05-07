@@ -9,8 +9,8 @@
   </parent>
   
   
-  <groupId>org.lemming</groupId>
-  <artifactId>lemming</artifactId>
+  <groupId>org.RonnyLemming</groupId>
+  <artifactId>RonnyLemming</artifactId>
   <version>0.3</version>
   <name>Lemming</name>
   <description>The ultimate localization microscopy software</description>

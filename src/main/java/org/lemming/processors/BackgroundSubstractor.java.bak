@@ -1,0 +1,342 @@
+package org.lemming.processors;
+
+import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
+import net.imglib2.FinalRealInterval;
+import net.imglib2.Interval;
+import net.imglib2.IterableInterval;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
+import net.imglib2.algorithm.neighborhood.Neighborhood;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.Intervals;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+
+import org.lemming.interfaces.Frame;
+
+
+public class BackgroundSubstractor<T extends RealType<T> & NativeType<T>, F extends Frame<T>> extends SingleInputSingleOutput<F, F> {
+
+	private boolean hasMoreOutputs=true;
+	private long start;
+	private boolean invert=false;
+	private boolean doPresmooth=false;
+	private double radius=1;
+	private ImgFactory<T> imgFactory;
+	
+	public BackgroundSubstractor(double radius, boolean doPresmooth, boolean invert){
+		start=System.currentTimeMillis();
+		hasMoreOutputs = true;
+		this.imgFactory = new ArrayImgFactory<T>();
+		this.radius = radius;
+		this.doPresmooth = doPresmooth;
+		this.invert = invert;
+	}
+	
+	@Override
+	public boolean hasMoreOutputs() {
+		return hasMoreOutputs;
+	}
+
+	@Override
+	public void process(F frame) {
+		if (frame==null) return;
+		process1(frame);
+		if (frame.isLast()){
+			long end = System.currentTimeMillis();
+			System.out.println("Last frame finished:"+frame.getFrameNumber()+" in "+(end-start)+" ms");
+			frame.setLast(true);
+			output.put(frame);
+			hasMoreOutputs = false;
+			stop();
+			return;
+		}
+		if (frame.getFrameNumber() % 500 == 0)
+			System.out.println("Frames finished:"+frame.getFrameNumber());
+	}
+	
+	private void invert(RandomAccessibleInterval<T> source){
+		IterableInterval<T> iterableTarget = Views.iterable(source);
+        for ( T type : iterableTarget){
+        	double newType = type.getRealDouble();
+        	type.mul(-newType);
+        }
+	}
+
+	private void process1(F frame) {
+		
+		RandomAccessibleInterval<T> interval = frame.getPixels();
+		RollingBall ball = new RollingBall(radius);
+
+        boolean shrink = ball.shrinkFactor >1;
+
+        if (invert)
+            invert(interval);
+        if (doPresmooth)
+            filter3x3(interval);
+        if (Thread.currentThread().isInterrupted()) return;
+        RandomAccessibleInterval<T> smallImage = shrink ? shrinkImage(interval, ball.shrinkFactor) : interval;
+        if (Thread.currentThread().isInterrupted()) return;
+        rollBall(ball, smallImage);
+        if (Thread.currentThread().isInterrupted()) return;
+        if (shrink)
+        	interval=enlargeImage(smallImage, ball.shrinkFactor); //interval will be overwritten !
+        if (Thread.currentThread().isInterrupted()) return;
+
+        if (invert)
+            invert(interval);
+	}
+	
+	private void filter3x3(final RandomAccessibleInterval<T> fp) {
+		final Interval interval = Intervals.expand( fp, -1 );
+		final RandomAccessibleInterval<T> source = Views.interval( fp, interval );
+		final Cursor< T > center = Views.iterable( source ).cursor();
+		final RectangleShape shape = new RectangleShape( 1, false );
+
+		for ( final Neighborhood< T > localNeighborhood : shape.neighborhoods( source ) )
+		{
+			center.fwd();
+			T centerValue = center.get();
+			T sum = centerValue.copy();
+			
+			for ( final T value : localNeighborhood ) {
+				sum.add(value);
+		    }
+			center.get().setReal(sum.getRealFloat()/localNeighborhood.size());
+		}
+	}	
+
+	// enlarge image using linear interpolation
+	private RandomAccessibleInterval<T> enlargeImage(RandomAccessibleInterval<T> smallImage, int shrinkFactor) {
+		
+		RealRandomAccessible<T> interpolant = Views.interpolate(Views.extendMirrorSingle( smallImage ), new NLinearInterpolatorFactory<T>() );
+		
+		final int n = smallImage.numDimensions();
+		final double[] min = new double[ n ];
+		final double[] max = new double[ n ];
+		
+		for ( int d = 0; d < n; ++d ){
+			min[d] = smallImage.realMin(d);
+		    max[d] = smallImage.realMax(d);
+		}
+		
+		FinalRealInterval interval = new FinalRealInterval( min, max );
+		
+		long[] pixelSize = new long[ n ];
+        double[] intervalSize = new double[ n ];
+ 
+        for ( int d = 0; d < n; ++d )
+        {
+            intervalSize[ d ] = interval.realMax( d ) - interval.realMin( d );
+            pixelSize[ d ] = Math.round( intervalSize[ d ] * shrinkFactor ) + 1;
+        }
+ 
+        // create the output image
+        Img< T > out = imgFactory.create(pixelSize, interpolant.realRandomAccess().get().createVariable());
+ 
+        // cursor to iterate over all pixels
+        Cursor< T > cursor = out.localizingCursor();
+ 
+        // create a RealRandomAccess on the source (interpolator)
+        RealRandomAccess< T > realRandomAccess = interpolant.realRandomAccess();
+ 
+        // the temporary array to compute the position
+        double[] tmp = new double[ n ];
+ 
+        // for all pixels of the output image
+        while ( cursor.hasNext() )
+        {
+            cursor.fwd();
+ 
+            // compute the appropriate location of the interpolator
+            for ( int d = 0; d < n; ++d )
+                tmp[ d ] = cursor.getDoublePosition( d ) / out.realMax( d ) * intervalSize[ d ]
+                        + interval.realMin( d );
+ 
+            // set the position
+            realRandomAccess.setPosition( tmp );
+ 
+            // set the new value
+            cursor.get().set( realRandomAccess.get() );
+        }
+        return out;
+	}
+	
+	/** Creates a lower resolution image for ball-rolling using the minimum as interpolator */ 
+	private  RandomAccessibleInterval<T> shrinkImage(final RandomAccessibleInterval<T> source, final int shrinkFactor) {
+		
+		//correct interval for cursor
+		final int n = source.numDimensions();
+		final long[] min = new long[ n ];
+		final long[] max = new long[ n ];
+		
+		for ( int d = 0; d < n; ++d ){
+			min[d] = source.min(d);
+		    max[d] = source.max(d)-shrinkFactor;
+		}
+		
+		Interval interval = new FinalInterval( min, max );
+		RandomAccessibleInterval<T> intervalCursor = Views.interval( source, interval );
+		
+		// compute the number of pixels of the output and the size of the real interval
+		int numDimensions = interval.numDimensions();
+        long[] intervalSize = new long[ numDimensions ];
+ 
+        for ( int d = 0; d < numDimensions; ++d ) {
+            intervalSize[ d ] = Math.round((interval.dimension(d)+shrinkFactor-1)/shrinkFactor);
+        }
+        
+        // create the output image
+        Img<T> out = imgFactory.create(intervalSize, Views.iterable(source).firstElement().createVariable());
+ 
+        // cursor to iterate over all pixels
+        Cursor< T > cursor = out.localizingCursor();
+ 
+        // for all pixels of the output image
+        while ( cursor.hasNext() )
+        {
+            cursor.fwd();
+            
+            // calculate minimum
+            final IntervalView<T> neighborhood = Views.interval(intervalCursor, createSpan(cursor, shrinkFactor));
+            final Cursor<T> neighborhoodCursor = neighborhood.cursor();
+            T type = neighborhoodCursor.next();
+            T minimum = type.copy();
+           
+            while ( cursor.hasNext() ) {
+            	 type = cursor.next();
+                 if ( type.compareTo( minimum ) < 0 )
+                     minimum.set( type );    
+            }
+            // set the new value
+            cursor.get().set( minimum );
+        }
+ 
+        return out;
+	}
+	
+	private Interval createSpan( final Localizable p , final int shrinkFactor )
+	{
+		int n = p.numDimensions();
+		
+		final long[] min = new long[ n ];
+		final long[] max = new long[ n ];
+		final long[] position = new long[ n ];
+		p.localize( position ); 
+		for ( int d = 0; d < n; ++d )
+		{
+			min[ d ] = position[d] * shrinkFactor;
+			max[ d ] = position[d] * shrinkFactor + shrinkFactor;
+		}
+		return new FinalInterval( min, max );
+	}
+
+	void rollBall(final RollingBall ball, RandomAccessibleInterval<T> fp) {
+
+        int ballWidth = ball.width;
+        int radius = ballWidth/2; // integer division rounds down
+        
+        final IntervalView<T> withBorder = Views.interval( Views.extendMirrorSingle(fp),Intervals.expand( fp, radius)); // care for image borders
+        
+        final RandomAccessibleInterval<DoubleType> zBall = ArrayImgs.doubles(ball.data,new long[]{ballWidth,ballWidth});
+        
+        final Cursor< T > center = Views.flatIterable( fp ).cursor();
+
+		final RectangleShape shape = new RectangleShape( radius, false );
+		
+		for ( final Neighborhood<T> localNeighborhood : shape.neighborhoods( withBorder ) ){
+			
+			center.fwd();
+			Cursor<T> localCursor = localNeighborhood.cursor();
+			Cursor<DoubleType> BallCursor = Views.flatIterable( zBall ).cursor();
+			
+			double z = localCursor.next().getRealDouble() - BallCursor.next().getRealDouble();
+			
+			while(localCursor.hasNext() && BallCursor.hasNext()){
+				double zReduced = localCursor.next().getRealDouble() - BallCursor.next().getRealDouble();
+				if (z > zReduced)           
+                    z = zReduced;
+			}
+			
+			BallCursor.reset();
+			double zFinal = z + BallCursor.next().getRealDouble();
+			
+			while(BallCursor.hasNext()){
+				double zMin = z + BallCursor.next().getRealDouble();
+				if (zFinal < zMin){
+					zFinal = zMin;
+				}				
+			}
+			center.get().setReal(zFinal);
+
+        }
+    }
+}
+
+class RollingBall {
+
+    double[] data;
+    int width;
+    public int shrinkFactor;
+    
+    RollingBall(double radius) {
+        int arcTrimPer;
+        if (radius<=10) {
+            shrinkFactor = 1;
+            arcTrimPer = 24; // trim 24% in x and y
+        } else if (radius<=30) {
+            shrinkFactor = 2;
+            arcTrimPer = 24; // trim 24% in x and y
+        } else if (radius<=100) {
+            shrinkFactor = 4;
+            arcTrimPer = 32; // trim 32% in x and y
+        } else {
+            shrinkFactor = 8;
+            arcTrimPer = 40; // trim 40% in x and y
+        }
+        buildRollingBall(radius, arcTrimPer);
+    }
+    
+    /** Computes the location of each point on the rolling ball patch relative to the 
+    center of the sphere containing it.  The patch is located in the top half 
+    of this sphere.  The vertical axis of the sphere passes through the center of 
+    the patch.  The projection of the patch in the xy-plane below is a square.
+    */
+    void buildRollingBall(double ballradius, int arcTrimPer) {
+        double rsquare;     // rolling ball radius squared
+        int xtrim;          // # of pixels trimmed off each end of ball to make patch
+        int xval, yval;     // x,y-values on patch relative to center of rolling ball
+        double smallballradius; // radius of rolling ball (downscaled in x,y and z when image is shrunk)
+        int halfWidth;      // distance in x or y from center of patch to any edge (patch "radius")
+        
+        smallballradius = ballradius/shrinkFactor;
+        if (smallballradius<1)
+            smallballradius = 1;
+        rsquare = smallballradius*smallballradius;
+        xtrim = (int)(arcTrimPer*smallballradius)/100; // only use a patch of the rolling ball
+        halfWidth = (int)Math.round(smallballradius - xtrim);
+        width = 2*halfWidth+1;
+        data = new double[width*width];
+
+        for (int y=0, p=0; y<width; y++)
+            for (int x=0; x<width; x++, p++) {
+                xval = x - halfWidth;
+                yval = y - halfWidth;
+                double temp = rsquare - xval*xval - yval*yval;
+                data[p] = temp>0. ? Math.sqrt(temp) : 0f;
+            }
+    }
+
+}
+

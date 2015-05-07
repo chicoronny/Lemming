@@ -24,7 +24,7 @@ public class BackgroundSubstractorTest {
 	@Before
 	public void setUp() throws Exception {
 		pipe = new Pipeline();
-		tif = new ImageJTIFFLoader("/home/ronny/Bilder/TubulinAF647.tif");
+		tif = new ImageJTIFFLoader("/Users/ronny/Documents/TubulinAF647.tif");
 
 		frames = new FastStore<Frame>();
 		tif.setOutput(frames);
