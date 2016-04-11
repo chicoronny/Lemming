@@ -121,7 +121,7 @@ public class BackgroundSubstractor<T extends RealType<T> & NativeType<T>, F exte
     			p++;
     		}
     	} else if (typename.contains("UnsignedShortType")){
-    		float offset = invert ? 65535.0f : 0f;//includes 0.5 for rounding when converting float to short
+    		float offset = invert ? 65535.0f : 0f;
             while(cursor.hasNext()){
     			cursor.fwd();
     			float value = cursor.get().getRealFloat() - bgPixels[p] + offset;
@@ -132,7 +132,7 @@ public class BackgroundSubstractor<T extends RealType<T> & NativeType<T>, F exte
     			p++;
     		}
     	} else if (typename.contains("UnsignedByteType")){
-    		float offset = invert ? 255.0f : 0f;//includes 0.5 for rounding when converting float to short
+    		float offset = invert ? 255.0f : 0f;
             while(cursor.hasNext()){
     			cursor.fwd();
     			float value = cursor.get().getRealFloat() - bgPixels[p] + offset;

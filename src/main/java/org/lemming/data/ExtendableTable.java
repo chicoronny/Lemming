@@ -1,5 +1,9 @@
 package org.lemming.data;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import javolution.util.FastMap;
 import javolution.util.FastTable;
 
@@ -18,6 +22,7 @@ public class ExtendableTable {
 	 * 
 	 */
 	public ExtendableTable(){
+		addLocalizationMembers();
 	}
 	
 	/**
@@ -31,30 +36,22 @@ public class ExtendableTable {
 	 * 
 	 */
 	public void addLocalizationMembers(){
-		table.put("id",new FastTable<Object>());
-		table.put("x",new FastTable<Object>());
-		table.put("y",new FastTable<Object>());
+		//table.put("id",new FastTable<Object>());
+		table.put("xpix",new FastTable<Object>());
+		table.put("ypix",new FastTable<Object>());
 	}
 	
 	
-	/**
-	 * @param row - row
-	 * @return row elements as Map
-	 */
-	public FastMap<String,Object> newRow(){
-		FastMap<String,Object> map = new FastMap<String,Object>();
-		for (String key : table.keySet()){
-			map.put(key,new Object());
-		}
-		return map;
+	public Set<String> columnNames(){
+		return table.keySet();
 	}
 	
 	/**
 	 * @param row - row
 	 */
-	public void addRow(FastMap<String,Object> row){
+	public void addRow(Map<String,Object> row){
 		for (String key : row.keySet()){
-			set(key,row.get(key));
+			add(key,row.get(key));
 		}
 		nRows++;
 	}
@@ -63,21 +60,46 @@ public class ExtendableTable {
 	 * @param row - row
 	 * @return data
 	 */
-	public FastMap<String,Object> getRow(int row){
-		FastMap<String,Object> map = new FastMap<String,Object>(); // row map
+	public Map<String,Object> getRow(int row){
+		Map<String,Object> map = new FastMap<String,Object>(); // row map
 		for (String key : table.keySet())
 			map.put(key, table.get(key).get(row));
 		return map;
 	}
 	
 	/**
+	 * @param col - colummn
+	 * @return column
+	 */
+	public List<Object> getColumn(String col){
+		if(table.keySet().contains(col))
+			return table.get(col);
+		System.err.println("unknown column");
+		return null;
+	}
+	
+	/**
+	 * @param col - colummn
+	 * @return column
+	 */
+	public Object getData(String col, int row){
+		if(table.keySet().contains(col) && row < nRows)
+			return table.get(col).get(row);
+		System.err.println("unknown column or row");
+		return null;
+	}
+	
+	/**
 	 * @param member - member 
 	 * @param o - object
 	 */
-	public void set(String member, Object o){
-		FastTable<Object> t = table.get(member);
-		if (t==null) { System.err.println("unknown column"); return;}
-		t.add(o);
+	public void add(String member, Object o){
+		if(table.keySet().contains(member)){
+			FastTable<Object> t = table.get(member);
+			t.add(o);
+			return;
+		}
+		System.err.println("unknown column");
 	}
 	
 	
@@ -100,8 +122,8 @@ public class ExtendableTable {
 	 *  
 	 * @return a class implementing the Store interface.
 	 */
-	public Store<FastMap<String,Object>> getFIFO() {
-		return new Store<FastMap<String,Object>> () {
+	public Store<Map<String,Object>> getFIFO() {
+		return new Store<Map<String,Object>> () {
 			int lastRow = 0;
 						
 			@Override
@@ -110,9 +132,9 @@ public class ExtendableTable {
 			}
 			
 			@Override
-			public FastMap<String,Object> get() {
+			public Map<String,Object> get() {
 				if (isEmpty()) {
-					FastMap<String, Object> row = getRow(lastRow-1);
+					Map<String, Object> row = getRow(lastRow-1);
 					for (String key : row.keySet())
 						row.put(key, new LastElement(true));
 					return row;
@@ -122,7 +144,7 @@ public class ExtendableTable {
 			}
 			
 			@Override
-			public void put(FastMap<String, Object> el) {
+			public void put(Map<String, Object> el) {
 				addRow(el);
 				nRows++;			
 			}			

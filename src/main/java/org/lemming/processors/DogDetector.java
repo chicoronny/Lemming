@@ -6,12 +6,15 @@ import java.util.List;
 
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.Sampler;
 import net.imglib2.algorithm.dog.DifferenceOfGaussian;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.algorithm.localextrema.SubpixelLocalization;
+import net.imglib2.algorithm.neighborhood.Neighborhood;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -128,6 +131,7 @@ public class DogDetector<T extends RealType<T>, F extends Frame<T>> extends Sing
 			final double y = refinedPeak.getDoublePosition( 1 ) * calibration[ 1 ];
 			output.put(new XYFLocalization(frame.getFrameNumber(), x, y));
 		}
+		
 	}
 
 	@Override

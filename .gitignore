@@ -13,3 +13,4 @@ hs_err_pid*
 
 /samples
 /target
+.DS_Store
