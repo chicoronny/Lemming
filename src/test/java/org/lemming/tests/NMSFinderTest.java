@@ -1,67 +1,59 @@
 package org.lemming.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.lemming.data.FastStore;
-import org.lemming.data.Pipeline;
-import org.lemming.inputs.ImageJTIFFLoader;
-import org.lemming.interfaces.Frame;
-import org.lemming.interfaces.Localization;
 import org.lemming.interfaces.Store;
-import org.lemming.outputs.PrintToFile;
-//import org.lemming.processors.NMSFinder;
-import org.lemming.processors.NMSSubFinder;
+import org.lemming.modules.ImageLoader;
+import org.lemming.modules.SaveLocalizations;
+import org.lemming.modules.UnpackElements;
+import org.lemming.pipeline.Manager;
+import org.lemming.plugins.NMSDetector;
+import org.lemming.tools.LemmingUtils;
 
-/**
- * Test class for finding peaks based on a threshold value and inserts the
- * the frame number and the x,y coordinates of the localization into a Store.
- * 
- * @author Ronny Sczech
- */
-@SuppressWarnings({"javadoc","rawtypes"})
+import ij.ImagePlus;
+
+@SuppressWarnings("rawtypes")
 public class NMSFinderTest {
 
-	private ImageJTIFFLoader tif;
-	private Store<Frame> frames;
-	private Store<Localization> localizations;
-	private NMSSubFinder peak;
-	private PrintToFile print;
-	private Pipeline pipe;
-
+	private Manager pipe;
+	private ImageLoader tif;
+	private SaveLocalizations saver;
+	private NMSDetector peak;
+	private UnpackElements unpacker;
+	private Map<Integer, Store> map;
 	
-	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
-		pipe = new Pipeline();	
-		
-		frames = new FastStore<Frame>();
-		tif = new ImageJTIFFLoader("/home/ronny/Bilder/TubulinAF647.tif");
-		tif.setOutput(frames);
+		pipe = new Manager();	
+		final ImagePlus image = new ImagePlus(System.getProperty("user.home")+"/ownCloud/storm/experiment3D.tif");
+		tif = new ImageLoader<>(image, LemmingUtils.readCameraSettings("camera.props"));
 		pipe.add(tif);
 		
-		localizations = new FastStore<Localization>();
-		peak = new NMSSubFinder(700,4);
-		peak.setInput(frames);
-		peak.setOutput(localizations);
+		peak = new NMSDetector(700,9,0);
 		pipe.add(peak);
 		
-		File f = new File("/home/ronny/Bilder/resultsNMSFinder.csv");
-		print = new PrintToFile(f);
-		print.setInput(localizations);
-		pipe.add(print);		
+		unpacker = new UnpackElements();
+		pipe.add(unpacker);
+		
+		saver = new SaveLocalizations(new File(System.getProperty("user.home")+"/ownCloud/storm/nmsfinder.csv"));
+		pipe.add(saver);
+		
+		pipe.linkModules(tif, peak, true, image.getStackSize());
+		pipe.linkModules(peak, unpacker);
+		pipe.linkModules(unpacker, saver);
+		map = pipe.getMap();
 	}
 
 	@Test
 	public void test() {
-		long startTime = System.currentTimeMillis();
 		pipe.run();
-		long endTime = System.currentTimeMillis();
-		System.out.println(endTime-startTime);		
-		assertEquals(true,frames.isEmpty());
+		System.out.println("");		
+		assertEquals(true,map.values().iterator().next().isEmpty());
 	}
 
 }

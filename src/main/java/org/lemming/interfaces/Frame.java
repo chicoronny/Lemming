@@ -3,14 +3,12 @@ package org.lemming.interfaces;
 import net.imglib2.RandomAccessibleInterval;
 
 /**
- * Interface representing a Frame. A Frame is the input to a localization module and typically contains a 2D image, but being generic for T, it can 
- * in principle be anything.
- * 
+ * Frame holds an 2D image plus some useful metadata.
  * @author Ronny Sczech
- * @param <T> data type
+ *
+ * @param <T>
  */
-public interface Frame<T> extends Element{
-	
+public interface Frame<T> extends Element, Comparable<Frame<T>> {
 	/** 
 	 * @return Return the frame number in the movie */
 	public long getFrameNumber();
@@ -26,6 +24,9 @@ public interface Frame<T> extends Element{
 	/**  
 	 * @return Return the height of this frame */
 	public int getHeight();
+	
+	/**  
+	 * @return Return the pixel size */
+	public double getPixelDepth();
 
-	public void setLast(boolean b);
 }
