@@ -107,7 +107,7 @@ public class Manager extends SwingWorker<Void,Void> {
 	@Override
 	public void done(){
 		setProgress(0);
-		service.shutdown();
+		//service.shutdown();
 	}
 
 	public void reset(){
@@ -115,6 +115,7 @@ public class Manager extends SwingWorker<Void,Void> {
 		modules.clear();
 		done = false;			
 		setProgress(0);
+		maximum = 1;
 	}
 	
 	private class StoreMonitor extends Thread {

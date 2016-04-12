@@ -86,7 +86,11 @@ public class QuadraticFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 		public int getHalfKernel() {
 			return size;
 		}
-
+		
+		@Override
+		public boolean hasGPU() {
+			return false;
+		}
 	}
 
 }

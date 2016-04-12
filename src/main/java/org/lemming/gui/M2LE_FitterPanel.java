@@ -33,12 +33,9 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 	public static final String KEY_WINDOW_SIZE = "WINDOW_SIZE";
 	public static final String KEY_USABLE_PIXEL = "USABLE_PIXEL";
 	public static final String KEY_CALIBRATION_FILENAME = "CALIBRATION_FILENAME";
-	public static final String KEY_CAMERA_FILENAME = "CAMERA_FILENAME";
 	public static final String KEY_STEPSIZE = "STEPSIZE";
 	private JSpinner spinnerWindowSize;
-	private JButton btnCamera;
 	private JButton btnCalibration;
-	private JLabel lblCamera;
 	private JLabel lblCalibration;
 	protected File calibFile;
 	protected File camFile;
@@ -82,24 +79,6 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 			}
 		});
 		
-		lblCamera = new JLabel("File");
-		
-		btnCamera = new JButton("Cam File");
-		btnCamera.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-					JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
-			    	fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			    	fc.setDialogTitle("Import Camera File");
-			    	int returnVal = fc.showOpenDialog(null);
-			    	 
-			        if (returnVal != JFileChooser.APPROVE_OPTION)
-			        	return;
-			        camFile = fc.getSelectedFile();
-			        lblCamera.setText(camFile.getName());
-			}
-		});
-		
 		btnNewCalibration = new JButton("New Calibration");
 		btnNewCalibration.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -135,15 +114,11 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 								.addComponent(textFieldUsablePixel, 0, 0, Short.MAX_VALUE)
 								.addComponent(spinnerWindowSize, GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE)))
 						.addGroup(groupLayout.createSequentialGroup()
-							.addComponent(btnCamera, GroupLayout.PREFERRED_SIZE, 90, GroupLayout.PREFERRED_SIZE)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(lblCamera, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE))
-						.addGroup(groupLayout.createSequentialGroup()
 							.addComponent(btnCalibration, GroupLayout.PREFERRED_SIZE, 90, GroupLayout.PREFERRED_SIZE)
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addComponent(lblCalibration, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE))
 						.addComponent(btnNewCalibration))
-					.addContainerGap(148, Short.MAX_VALUE))
+					.addContainerGap(146, Short.MAX_VALUE))
 		);
 		groupLayout.setVerticalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)
@@ -158,15 +133,11 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 						.addComponent(lblUsablePixel, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
-						.addComponent(lblCamera, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
-						.addComponent(btnCamera))
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
 						.addComponent(btnCalibration)
 						.addComponent(lblCalibration, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(btnNewCalibration)
-					.addGap(124))
+					.addGap(170))
 		);
 		setLayout(groupLayout);
 	}
@@ -187,8 +158,6 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 	@Override
 	public void setSettings(Map<String, Object> settings) {
 		spinnerWindowSize.setValue(settings.get(KEY_WINDOW_SIZE));
-		camFile = (File) settings.get(KEY_CAMERA_FILENAME);
-		lblCamera.setText(camFile.getName());
 		textFieldUsablePixel.setText(String.valueOf(settings.get(KEY_USABLE_PIXEL)));
 		calibFile = (File) settings.get(KEY_CALIBRATION_FILENAME);
 		lblCalibration.setText(calibFile.getName());
@@ -208,7 +177,6 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 			//IJ.error("Please provide a Camera File!");
 			return settings;
 		}
-		settings.put(KEY_CAMERA_FILENAME, camFile.getAbsolutePath());
 		return settings;
 	}
 }

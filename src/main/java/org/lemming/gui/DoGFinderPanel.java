@@ -50,7 +50,7 @@ public class DoGFinderPanel extends ConfigurationPanel {
 				fireChanged();
 			}
 		}));
-		spinnerRadius.setModel(new SpinnerNumberModel(new Integer(10), new Integer(1), null, new Integer(1)));
+		spinnerRadius.setModel(new SpinnerNumberModel(new Integer(7), new Integer(1), null, new Integer(1)));
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)

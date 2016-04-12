@@ -61,7 +61,7 @@ public class GPUFitterTest {
 		AbstractModule peak = new NMSDetector(350,6,10); //
 		//AbstractModule peak = new DoGFinder(4.5f,13); //DRG_KO_5_1.tif
 		//AbstractModule peak = new NMSDetector(2000,5); //DRG_WT_MT_A647_1.tif
-		AbstractModule fitter = new MLE_Fitter<>(6);
+		AbstractModule fitter = new MLE_Fitter<>(6,1152);
 		AbstractModule saver = new SaveLocalizations(new File("/media/backup/ownCloud/Tubulin1-1.csv"));
 		AbstractModule unpacker = new UnpackElements();
 		AbstractModule saver2 = new SaveLocalizations(new File("/media/backup/ownCloud/Tubulin1-1det.csv"));

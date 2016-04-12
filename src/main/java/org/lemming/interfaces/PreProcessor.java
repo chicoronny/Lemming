@@ -12,5 +12,8 @@ import net.imglib2.type.numeric.RealType;
  * @param <T> - data type
  */
 public interface PreProcessor<T extends RealType<T>> extends Detector<T>{
+	
 	public Frame<T> preProcess(final Queue<Frame<T>> list, final boolean isLast);
+	
+	public int getNumberOfFrames();
 }

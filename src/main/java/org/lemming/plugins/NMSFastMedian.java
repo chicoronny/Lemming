@@ -311,6 +311,11 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 		counter=0;
 	}
 	
+	@Override
+	public int getNumberOfFrames() {
+		return nFrames;
+	}
+	
 	/**
 	 * Factory for the Fast Median Filter implementation
 	 * 
@@ -362,10 +367,6 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 		@Override
 		public boolean hasPreProcessing() {
 			return true;
-		}
-
-		
-
+		}	
 	}
-
 }

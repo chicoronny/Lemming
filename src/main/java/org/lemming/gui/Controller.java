@@ -183,7 +183,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private long start;
 	private AbstractModule saver;
 	public static String lastDir = System.getProperty("user.home"); 
-	private Roi imageRoi;
+	//private Roi imageRoi;
 	private List<Double> cameraProperties;
 
 	/**
@@ -517,11 +517,16 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			public void imageUpdated(ImagePlus ip) {
 				if (widgetSelection == 0) return;
 				else
-				if (widgetSelection == DETECTOR && ip == previewerWindow.getImagePlus() )
-					if (detectorFactory.hasPreProcessing())
-						ppPreview(getConfigSettings(panelLower).getSettings());
-					else
-						detectorPreview(getConfigSettings(panelLower).getSettings());
+				if (widgetSelection == DETECTOR && ip == previewerWindow.getImagePlus() ){
+					detectorFactory.setAndCheckSettings(getConfigSettings(panelLower).getSettings());
+					detector = detectorFactory.getDetector();
+					if (detectorFactory.hasPreProcessing()){
+							ppPreview();
+						}
+					else{
+						detectorPreview();
+					}
+				}
 				else
 				if (widgetSelection == FITTER && ip == previewerWindow.getImagePlus() )
 					fitterPreview();
@@ -600,6 +605,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			IJ.error("Please choose detector first!");
 			return;
 		}
+		manager.reset();
+		manager.add(tif);
 		manager.add(detector);
 		manager.linkModules(tif, detector, true, elements);
 	
@@ -627,8 +634,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	//// Private Methods
 
 	private void setRoi() {
-		if (previewerWindow == null)
-			return;
+		if (previewerWindow == null) return;
 		final ImagePlus curImage = previewerWindow.getImagePlus();
 		if (chckbxROI.isSelected()) {
 			Roi roi = curImage.getRoi();
@@ -638,8 +644,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				final int iHeight = r.height / 2;
 				final int iXROI = r.x + r.width / 4;
 				final int iYROI = r.y + r.height / 4;
-				imageRoi = new Roi(iXROI, iYROI, iWidth, iHeight);
-				curImage.killRoi();
+				curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
 			}
 		} else {
 			curImage.killRoi();
@@ -678,7 +683,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		if (loc_im != null) {
 			cameraProperties=LemmingUtils.readCameraSettings("camera.props");
 			tif = new ImageLoader<>(loc_im, cameraProperties);
-			manager.add(tif);
 
 			previewerWindow = new StackWindow(loc_im, loc_im.getCanvas());
 			previewerWindow.addKeyListener(new KeyAdapter() {
@@ -691,7 +695,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					}
 				}
 			});
-			imageRoi = new Roi(0, 0, loc_im.getWidth(), loc_im.getHeight());
 			previewerWindow.setVisible(true);
 			lblFile.setText(loc_im.getTitle());
 			validate();
@@ -737,22 +740,27 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		}
 	}
 
-	private void ppPreview(Map<String, Object> map) {
+	private void ppPreview() {
 		final ImagePlus img = previewerWindow.getImagePlus();
 		final int frameNumber = img.getSlice();
 		final ImageStack stack = img.getStack();
 		final int stackSize = stack.getSize();
-		final int nFrames = (int) map.get(FastMedianPanel.KEY_FRAMES);
 
 		final Double offset = cameraProperties.get(0);
 		final Double em_gain = cameraProperties.get(1);
 		final Double conversion = cameraProperties.get(2);
 		final Queue<Frame<T>> list = new ArrayDeque<Frame<T>>();
-		final int start = frameNumber/nFrames;
+		PreProcessor<T> preprocessor = null;
+		try {
+			preprocessor = (PreProcessor<T>) detector;
+		} catch (Exception e) {
+			return;
+		}
+		final int start = frameNumber/preprocessor.getNumberOfFrames();
 		double adu, im2phot;
 		Frame<T> origFrame=null;
 		
-		for (int i = start; i < start + nFrames; i++) {
+		for (int i = start; i < start + preprocessor.getNumberOfFrames(); i++) {
 			if (i < stackSize) {
 				Object ip = stack.getPixels(i+1);
 				Img<T> curImage = LemmingUtils.wrap(ip, new long[]{stack.getWidth(), stack.getHeight()});
@@ -763,17 +771,16 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					im2phot = adu*conversion/em_gain;
 					it.get().setReal(im2phot);
 				}
-				Frame<T> curFrame = new ImgLib2Frame<T>(start, (int) curImage.dimension(0), (int) curImage.dimension(1), 1, curImage);
+				Frame<T> curFrame = new ImgLib2Frame<T>(i, (int) curImage.dimension(0), (int) curImage.dimension(1), 1, curImage);
 				if (i==frameNumber) origFrame=curFrame;
 				list.add(curFrame);
 			}
 		}
 		if (origFrame==null) origFrame=list.peek();
-		PreProcessor<T> preprocessor = (PreProcessor<T>) detector;
 		Frame<T> result = preprocessor.preProcess(list,true);
 		detResults = preprocessor.detect(LemmingUtils.substract(origFrame,result));
 		if (detResults==null) return;
-		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), imageRoi.getBounds(), 1);
+		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), new Rectangle(0,0,img.getWidth(),img.getHeight()), 1);
 		final PointRoi roi = new PointRoi(points);
 		img.setRoi(roi);
 	}
@@ -793,41 +800,43 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 		final String key = detectorProvider.getVisibleKeys().get(index);
 		detectorFactory = detectorProvider.getFactory(key);
+		
 		((TitledBorder) panelLower.getBorder()).setTitle(detectorFactory.getName());
 		((CardLayout) panelLower.getLayout()).show(panelLower, key);
 		System.out.println("Detector_" + index + " : " + key);
 
 		ConfigurationPanel panelDown = getConfigSettings(panelLower);
+		detectorFactory.setAndCheckSettings(panelDown.getSettings());
+		detector = detectorFactory.getDetector();
 		if (detectorFactory.hasPreProcessing())
-			ppPreview(panelDown.getSettings());
+			ppPreview();
 		else
-			detectorPreview(panelDown.getSettings());
+			detectorPreview();
 		settings.putAll(panelDown.getSettings());
 		panelLower.repaint();
 	}
 
-	private void detectorPreview(Map<String, Object> map) {
+	private void detectorPreview() {
 		// TODO constrain to current ROI
-		detectorFactory.setAndCheckSettings(map);
-		detector = detectorFactory.getDetector();
 		final ImagePlus img = previewerWindow.getImagePlus();
 		img.killRoi();
 		final int frameNumber = img.getCurrentSlice();
+		final double pixelSize = previewerWindow.getImagePlus().getCalibration().pixelDepth;
 		ImageProcessor ip = img.getStack().getProcessor(frameNumber);
-		if (imageRoi.getBounds().width < ip.getWidth() || imageRoi.getBounds().height < ip.getHeight()){
-			ip.setRoi(imageRoi.getBounds());
+		Roi currentRoi = previewerWindow.getImagePlus().getRoi();
+		if (currentRoi != null){
+			ip.setRoi(currentRoi.getBounds());
 			ip = ip.crop();
 		} else{
-			imageRoi = new Roi(0,0,ip.getWidth(),ip.getHeight());
+			currentRoi = new Roi(0,0,ip.getWidth(),ip.getHeight());
 		}
-		final double pixelSize = cameraProperties.get(3);
 
 		Img<T> curImage = LemmingUtils.wrap(ip.getPixels(), new long[]{ip.getWidth(), ip.getHeight()});
 		ImgLib2Frame<T> curFrame = new ImgLib2Frame<>(frameNumber, (int) curImage.dimension(0), (int) curImage.dimension(1), pixelSize, curImage);
 
 		detResults = detector.detect(curFrame);
-		if (detResults==null) return;
-		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), imageRoi.getBounds(), pixelSize);
+		if (detResults.getList().isEmpty()) return;
+		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), currentRoi.getBounds(), pixelSize);
 		final PointRoi roi = new PointRoi(points);
 		img.setRoi(roi);
 	}
@@ -848,7 +857,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		((TitledBorder) panelLower.getBorder()).setTitle(fitterFactory.getName());
 		((CardLayout) panelLower.getLayout()).show(panelLower, key);
 		System.out.println("Fitter_" + index + " : " + key);
-	
+		fitter = fitterFactory.getFitter();
 		fitterPreview();
 		panelLower.repaint();
 	}
@@ -857,22 +866,24 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		final ImagePlus img = previewerWindow.getImagePlus();
 		img.killRoi();
 		final int frameNumber = img.getCurrentSlice();
-		final ImageStack stack = img.getStack();
-		ImageProcessor ip = stack.getProcessor(frameNumber);
-		if (imageRoi.getBounds().width < ip.getWidth() || imageRoi.getBounds().height < ip.getHeight()){
-			ip.setRoi(imageRoi.getBounds());
+		final double pixelSize = previewerWindow.getImagePlus().getCalibration().pixelDepth;
+		
+		ImageProcessor ip = previewerWindow.getImagePlus().getStack().getProcessor(frameNumber);;
+		Roi currentRoi = previewerWindow.getImagePlus().getRoi();
+		if (currentRoi != null){
+			ip.setRoi(currentRoi.getBounds());
 			ip = ip.crop();
 		} else{
-			imageRoi = new Roi(0,0,ip.getWidth(),ip.getHeight());
+			ip = previewerWindow.getImagePlus().getStack().getProcessor(frameNumber);
+			currentRoi = new Roi(0,0,ip.getWidth(),ip.getHeight());
 		}
-		final double pixelSize = cameraProperties.get(3);
 		final Img<T> curImage = LemmingUtils.wrap(ip.getPixels(), new long[]{ip.getWidth(), ip.getHeight()});
 		final ImgLib2Frame<T> curFrame = new ImgLib2Frame<>(frameNumber, (int) curImage.dimension(0), (int) curImage.dimension(1), pixelSize,curImage);
 		detResults = detector.detect(curFrame);
 		fitResults = CentroidFitterRA.fit(detResults.getList(), curImage, fitterFactory.getHalfKernel(), pixelSize);
 
 		if (fitResults == null) return;
-		final FloatPolygon points = LemmingUtils.convertToPoints(fitResults, imageRoi.getBounds(), pixelSize);
+		final FloatPolygon points = LemmingUtils.convertToPoints(fitResults, currentRoi.getBounds(), pixelSize);
 		final PointRoi roi = new PointRoi(points);
 		img.setRoi(roi);
 	}
@@ -1020,7 +1031,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	}
 
 	private void saveLocalizations() {
-		final SaveDialog sd = new SaveDialog("Import Images", "Results", ".csv");
+		final SaveDialog sd = new SaveDialog("Save Results", "Results.csv", ".csv");
 		if(sd.getFileName()==null) return;
 		lastDir = sd.getDirectory();
 		OpenDialog.setDefaultDirectory(lastDir);
@@ -1109,10 +1120,12 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				@Override
 				public void propertyChange(PropertyChangeEvent evt) {
 					Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
+					detectorFactory.setAndCheckSettings(value);
+					detector = detectorFactory.getDetector();
 					if (detectorFactory.hasPreProcessing())
-						ppPreview(value);
+						ppPreview();
 					else
-						detectorPreview(value);
+						detectorPreview();
 				}
 			});
 			panelLower.add(panelDown, key);
@@ -1133,6 +1146,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			fitterNames.add(factory.getName());
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
+			if (!factory.setAndCheckSettings(panelDown.getSettings())) continue;
 			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, new PropertyChangeListener() {
 				@Override
 				public void propertyChange(PropertyChangeEvent evt) {

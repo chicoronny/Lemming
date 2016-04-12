@@ -41,5 +41,9 @@ public interface FitterFactory extends PluginInterface{
 	 *  @return halfkernel size
 	 */
 	public int getHalfKernel();
-
+	
+	/**
+	 *  @return mark for GPU use
+	 */
+	public boolean hasGPU();
 }

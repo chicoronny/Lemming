@@ -89,8 +89,8 @@ public class DoGFinder<T extends RealType<T>> extends MultiRunModule implements 
 		final RandomAccessibleInterval<FloatType> dog = Views.offset(Util.getArrayOrCellImgFactory(interval, type).create(interval, type), min);
 		final RandomAccessibleInterval<FloatType> dog2 = Views.offset(Util.getArrayOrCellImgFactory(interval, type).create(interval, type), min);
 
-		final double sigma1 = radius / Math.sqrt(interval.numDimensions()) * 0.9;
-		final double sigma2 = radius / Math.sqrt(interval.numDimensions()) * 1.1;
+		final double sigma1 = radius / Math.sqrt(interval.numDimensions()) * 0.85;
+		final double sigma2 = radius / Math.sqrt(interval.numDimensions()) * 1.15;
 		final double[][] sigmas = DifferenceOfGaussian.computeSigmas(0.5, 2, calibration, sigma1, sigma2);
 
 		try {
