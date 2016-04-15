@@ -90,13 +90,12 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			transferList.addAll(frameList);
 			frameB = preProcess(transferList, false);
 			if (interpolating) {
-				if (frameA != null) {
+				if (frameA != null) 
 					interpolate(transferList);
-				}
 				frameA = frameB;
 			} else {
 				for (int i = 0; i < nFrames; i++) {
-					final Frame<T> filtered = LemmingUtils.substract(transferList.poll(), frameB);
+					final Frame<T> filtered = LemmingUtils.substract(frameB, transferList.poll());
 					newOutput(detect(filtered));
 				}
 			}
@@ -219,8 +218,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 
 			final Frame<T> filtered = LemmingUtils.substract(
-				transferList.poll(), new ImgLib2Frame<T>(
-					frameA.getFrameNumber() + i, frameA.getWidth(), frameA.getHeight(), frameA.getPixelDepth(), outFrame));
+					new ImgLib2Frame<T>(frameA.getFrameNumber() + i, frameA.getWidth(), frameA.getHeight(), frameA.getPixelDepth(), outFrame), transferList.poll());
 
 			newOutput(detect(filtered));
 		}
@@ -229,12 +227,12 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 	private void lastFrames(Queue<Frame<T>> transferList) {
 		// handle the last frames
 		for (int i = 0; i < lastListSize; i++) {
-			final Frame<T> filtered = LemmingUtils.substract(transferList.poll(), frameB);
+			final Frame<T> filtered = LemmingUtils.substract(frameB, transferList.poll());
 			newOutput(detect(filtered));
 		}
 
 		// create last frame
-		Frame<T> lastFrame = LemmingUtils.substract(transferList.poll(), frameB);
+		Frame<T> lastFrame = LemmingUtils.substract(frameB,transferList.poll() );
 		lastFrame.setLast(true);
 		newOutput(detect(lastFrame));
 	}
@@ -254,6 +252,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 		long width_ = interval.dimension(0);
 		long height_ = interval.dimension(1);
 		List<Element> found = new FastTable<Element>();
+		T first,second = max,third;
 
 		for (i = 0; i <= width_ - 1 - n_; i += n_ + 1) { // Loop over (n+1)x(n+1)
 			for (j = 0; j <= height_ - 1 - n_; j += n_ + 1) {
@@ -262,9 +261,9 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 				for (ii = i; ii <= i + n_; ii++) {
 					for (jj = j; jj <= j + n_; jj++) {
 						ra.setPosition(new int[] { ii, jj });
-						final T first = ra.get().copy();
+						first = ra.get().copy();
 						ra.setPosition(new int[] { mi, mj });
-						final T second = ra.get().copy();
+						second = ra.get().copy();
 						if (first.compareTo(second) > 0) {
 							mi = ii;
 							mj = jj;
@@ -278,10 +277,8 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 						if ((ll < i || ll > i + n_) || (kk < j || kk > j + n_)) {
 							if (ll < width_ && ll > 0 && kk < height_ && kk > 0) {
 								ra.setPosition(new int[] { ll, kk });
-								T first = ra.get().copy();
-								ra.setPosition(new int[] { mi, mj });
-								T second = ra.get().copy();
-								if (first.compareTo(second) > 0) {
+								third = ra.get().copy();
+								if (third.compareTo(second) > 0) {
 									failed = true;
 									break Outer;
 								}
@@ -291,7 +288,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 				}
 				if (!failed) {
 					ra.setPosition(new int[] { mi, mj });
-					T value = ra.get().copy();
+					final T value = ra.get();
 					if (value.getRealDouble() > threshold_) {
 						found.add(new Localization(mi * frame.getPixelDepth(), mj * frame.getPixelDepth(), value.getRealDouble(), frame
 							.getFrameNumber()));

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public class GaussianFitterTest {
 		AbstractModule fitter = new AstigFitter<>(7, LemmingUtils.readCSV("/media/backup/ownCloud/set1-calb.csv"));
 		AbstractModule saver = new SaveLocalizations(new File("/media/backup/ownCloud/set1l.csv"));
 		
-		pipe = new Manager();
+		pipe = new Manager(Executors.newCachedThreadPool());
 		pipe.add(tif);
 		pipe.add(peak);
 		pipe.add(fitter);

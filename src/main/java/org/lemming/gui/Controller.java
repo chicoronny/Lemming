@@ -12,51 +12,33 @@ import ij.gui.StackWindow;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
+import ij.plugin.ContrastEnhancer;
 import ij.plugin.FileInfoVirtualStack;
 import ij.plugin.FolderOpener;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.List;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.border.TitledBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.JTabbedPane;
-
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import java.awt.Rectangle;
-
-import javax.swing.JButton;
-
-import java.awt.FlowLayout;
-
-import javax.swing.GroupLayout;
+import javax.swing.border.LineBorder;
+import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.SwingWorker.StateValue;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JCheckBox;
-import javax.swing.JSpinner;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import org.lemming.factories.DetectorFactory;
 import org.lemming.factories.FitterFactory;
@@ -86,39 +68,9 @@ import org.lemming.providers.RendererProvider;
 import org.lemming.tools.LemmingUtils;
 
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.awt.Component;
-
-import javax.swing.SpinnerNumberModel;
-
-import java.awt.Dimension;
-import java.awt.event.KeyAdapter;
-
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JProgressBar;
-
-import java.awt.CardLayout;
-
-import javax.swing.border.TitledBorder;
-import javax.swing.border.LineBorder;
-
-import java.awt.Color;
 
 /**
  * The GUI main class controlling all user interactions
@@ -183,8 +135,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private long start;
 	private AbstractModule saver;
 	public static String lastDir = System.getProperty("user.home"); 
-	//private Roi imageRoi;
 	private List<Double> cameraProperties;
+	private ExecutorService service = Executors.newCachedThreadPool();
 
 	/**
 	 * Create the frame.
@@ -202,6 +154,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				if (rendererWindow != null)
 					rendererWindow.close();
 				Locale.setDefault(curLocale);
+				service.shutdown();
 			}
 		});
 		try {
@@ -475,7 +428,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		Locale.setDefault(usLocale);
 		settings = new HashMap<>();
 		table = new ExtendableTable();
-		manager = new Manager();
+		manager = new Manager(service);
 		manager.addPropertyChangeListener(new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
@@ -490,8 +443,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					start = current;
 				}
 				if (evt.getPropertyName().equals("state")) {
-					StateValue value = (StateValue) evt.getNewValue();
-					if (value == StateValue.DONE) {
+					int value =  (int)evt.getNewValue();
+					if (value == Manager.STATE_DONE) {
 						processed = true;
 						if (rendererWindow != null) rendererWindow.repaint();
 					}
@@ -696,6 +649,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				}
 			});
 			previewerWindow.setVisible(true);
+			final ImageProcessor ip = loc_im.getStack().getProcessor(loc_im.getSlice());
+			final ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
+			new ContrastEnhancer().stretchHistogram(ip, 0.3, stats);
 			lblFile.setText(loc_im.getTitle());
 			validate();
 		}
@@ -742,6 +698,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 	private void ppPreview() {
 		final ImagePlus img = previewerWindow.getImagePlus();
+		final double pixelSize = img.getCalibration().pixelDepth;
 		final int frameNumber = img.getSlice();
 		final ImageStack stack = img.getStack();
 		final int stackSize = stack.getSize();
@@ -756,7 +713,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		} catch (Exception e) {
 			return;
 		}
-		final int start = frameNumber/preprocessor.getNumberOfFrames();
+		final int start = frameNumber/preprocessor.getNumberOfFrames()*preprocessor.getNumberOfFrames();
 		double adu, im2phot;
 		Frame<T> origFrame=null;
 		
@@ -771,16 +728,16 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					im2phot = adu*conversion/em_gain;
 					it.get().setReal(im2phot);
 				}
-				Frame<T> curFrame = new ImgLib2Frame<T>(i, (int) curImage.dimension(0), (int) curImage.dimension(1), 1, curImage);
+				Frame<T> curFrame = new ImgLib2Frame<T>(i, (int) curImage.dimension(0), (int) curImage.dimension(1), pixelSize, curImage);
 				if (i==frameNumber) origFrame=curFrame;
 				list.add(curFrame);
 			}
 		}
 		if (origFrame==null) origFrame=list.peek();
 		Frame<T> result = preprocessor.preProcess(list,true);
-		detResults = preprocessor.detect(LemmingUtils.substract(origFrame,result));
+		detResults = preprocessor.detect(LemmingUtils.substract(result,origFrame));
 		if (detResults==null) return;
-		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), new Rectangle(0,0,img.getWidth(),img.getHeight()), 1);
+		final FloatPolygon points = LemmingUtils.convertToPoints(detResults.getList(), new Rectangle(0,0,img.getWidth(),img.getHeight()), pixelSize);
 		final PointRoi roi = new PointRoi(points);
 		img.setRoi(roi);
 	}
@@ -1008,14 +965,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				return;
 			if (table == null)
 				return;
-			final ExecutorService executor = Executors.newSingleThreadExecutor();
 			start = System.currentTimeMillis();
-			Future<?> f = executor.submit(manager);
-			try {
-				f.get();
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();return;
-			}
+			manager.run();
 		}
 		 
 		((TitledBorder) panelFilter.getBorder()).setTitle("Filter");

@@ -3,6 +3,7 @@ package org.lemming.tests;
 import static org.junit.Assert.*;
 
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,7 @@ public class FastMedianFilterTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		pipe = new Manager();
+		pipe = new Manager(Executors.newCachedThreadPool());
 		
 		tif = new ImageLoader<>(new ImagePlus("/Users/ronny/Documents/TubulinAF647.tif"), LemmingUtils.readCameraSettings("camera.props"));
 		pipe.add(tif);

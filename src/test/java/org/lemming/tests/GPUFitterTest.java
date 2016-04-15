@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +67,7 @@ public class GPUFitterTest {
 		AbstractModule unpacker = new UnpackElements();
 		AbstractModule saver2 = new SaveLocalizations(new File("/media/backup/ownCloud/Tubulin1-1det.csv"));
 		
-		pipe = new Manager();
+		pipe = new Manager(Executors.newCachedThreadPool());
 		pipe.add(tif);
 		//pipe.add(substracter);
 		//pipe.add(filter);

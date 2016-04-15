@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class NMSFinderTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		pipe = new Manager();	
+		pipe = new Manager(Executors.newCachedThreadPool());	
 		final ImagePlus image = new ImagePlus(System.getProperty("user.home")+"/ownCloud/storm/experiment3D.tif");
 		tif = new ImageLoader<>(image, LemmingUtils.readCameraSettings("camera.props"));
 		pipe.add(tif);

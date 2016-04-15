@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class GaussRendererTest {
 
 	@Before
 	public void setUp() throws Exception {
-		pipe = new Manager();
+		pipe = new Manager(Executors.newCachedThreadPool());
 		
 		reader = new ReadLocalizationPrecision3D(new File(System.getProperty("user.home")+"/ownCloud/storm/fitted.csv"),",");
 		pipe.add(reader);

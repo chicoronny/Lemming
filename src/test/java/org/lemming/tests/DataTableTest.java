@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class DataTableTest {
 
 	@Before
 	public void setUp() throws Exception {
-		pipe = new Manager();
+		pipe = new Manager(Executors.newCachedThreadPool());
 		
 		ReadLocalizationPrecision3D reader = new ReadLocalizationPrecision3D(new File("/home/ronny/Bilder/fitted.csv"),",");
 		pipe.add(reader);

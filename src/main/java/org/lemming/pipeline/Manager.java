@@ -1,14 +1,13 @@
 package org.lemming.pipeline;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import javax.swing.SwingWorker;
 
 import org.lemming.interfaces.ModuleInterface;
 import org.lemming.interfaces.Store;
@@ -22,15 +21,28 @@ import ij.IJ;
  * @author Ronny Sczech
  *
  */
-public class Manager extends SwingWorker<Void,Void> {
+public class Manager{
 	
+	public static final int STATE_DONE = 1;
 	final private Map<Integer,Store> storeMap = new LinkedHashMap<>();
 	final private Map<Integer,ModuleInterface> modules = new LinkedHashMap<>();
 	private boolean done = false;
 	private int maximum = 1;
-	final private ExecutorService service = Executors.newCachedThreadPool();
- 
-	public Manager() {
+	private ExecutorService service;
+	private final List< PropertyChangeListener > changeListeners = new ArrayList< PropertyChangeListener >();
+	private int progress;
+
+	public Manager(ExecutorService service) {
+		this.service = service;
+	}
+
+	public void addPropertyChangeListener( final PropertyChangeListener listener ){
+		changeListeners.add( listener );
+	}
+
+	public void firePropertyChanged(PropertyChangeEvent e) {
+		for ( final PropertyChangeListener cl : changeListeners )
+			cl.propertyChange( e );
 	}
 	
 	public void add(ModuleInterface module){		
@@ -70,9 +82,41 @@ public class Manager extends SwingWorker<Void,Void> {
 		return storeMap;
 	}
 	
-	@Override
-	protected Void doInBackground() throws Exception {
-		if (modules.isEmpty()) return null;
+	private void setProgress(int i) {
+		final PropertyChangeEvent EVENT_PROGRESS = new PropertyChangeEvent(this, "progress", progress, i);
+		firePropertyChanged(EVENT_PROGRESS);
+		progress=i;
+	}
+	
+	public void reset(){
+		for (ModuleInterface starter:modules.values())
+				((AbstractModule)starter).reset();
+		storeMap.clear();
+		modules.clear();
+		done = false;			
+		setProgress(0);
+		maximum = 1;
+	}
+	
+	public void run(){
+		execute();
+	}
+	
+	public void execute() {
+		final Runner r = new Runner();
+		r.start();
+		try {
+			r.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private class Runner extends Thread{ 
+
+		@Override
+		public void run() {
+		if (modules.isEmpty()) return;
 		StoreMonitor sm = new StoreMonitor();
 		sm.start();
 		final List<Object> threads= new ArrayList<>();
@@ -101,21 +145,11 @@ public class Manager extends SwingWorker<Void,Void> {
 		try {
             sm.join(200);
         } catch (InterruptedException ignore) {}
-		return null;
-	}
-	
-	@Override
-	public void done(){
-		setProgress(0);
-		//service.shutdown();
-	}
-
-	public void reset(){
-		storeMap.clear();
-		modules.clear();
-		done = false;			
-		setProgress(0);
-		maximum = 1;
+		
+		final PropertyChangeEvent EVENT_DONE = new PropertyChangeEvent(this, "state", 0, STATE_DONE);
+		firePropertyChanged(EVENT_DONE);
+		return;
+		}
 	}
 	
 	private class StoreMonitor extends Thread {

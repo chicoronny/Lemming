@@ -13,6 +13,7 @@ import org.lemming.tools.WaitForChangeListener;
 import org.lemming.tools.WaitForKeyListener;
 
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 public class FastMedianPanel extends ConfigurationPanel {
 
@@ -48,7 +49,8 @@ public class FastMedianPanel extends ConfigurationPanel {
 		JLabel lblThreshold = new JLabel("Threshold");
 		
 		textFieldThreshold = new JTextField();
-		textFieldThreshold.setText("1");
+		textFieldThreshold.setHorizontalAlignment(SwingConstants.TRAILING);
+		textFieldThreshold.setText("10");
 		textFieldThreshold.setColumns(10);
 		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable(){
 			@Override
