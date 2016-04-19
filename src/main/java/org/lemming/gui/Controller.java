@@ -25,20 +25,40 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.border.TitledBorder;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.*;
+import javax.swing.JTabbedPane;
+
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.Rectangle;
+
+import javax.swing.JButton;
+
+import java.awt.FlowLayout;
+
+import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.SwingWorker.StateValue;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JSpinner;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import org.lemming.factories.DetectorFactory;
 import org.lemming.factories.FitterFactory;
@@ -68,9 +88,28 @@ import org.lemming.providers.RendererProvider;
 import org.lemming.tools.LemmingUtils;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.awt.Component;
+
+import java.awt.Color;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.event.KeyAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.SpinnerNumberModel;
+import javax.swing.JProgressBar;
+import javax.swing.border.TitledBorder;
+import javax.swing.border.LineBorder;
 
 /**
  * The GUI main class controlling all user interactions
@@ -78,36 +117,26 @@ import java.util.concurrent.Executors;
  * @author Ronny Sczech
  *
  * @param <T> - data type
- * @param <F> - frame type
  */
 public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = -2596199192028890712L;
-	private JTabbedPane tabbedPane;
-	private JPanel panelLoc;
-	private JPanel panelRecon;
-	private JLabel lblPeakDet;
-	private JComboBox<String> comboBoxPeakDet;
-	private JCheckBox chckbxROI;
-	private JLabel lblSkipFrames;
-	private JSpinner spinnerSkipFrames;
-	private JButton btnLoad;
-	private JButton btnSave;
-	private JPanel panelMiddle;
+	private final JTabbedPane tabbedPane;
+	private final JComboBox<String> comboBoxPeakDet;
+	private final JCheckBox chckbxROI;
+	private final JButton btnLoad;
+	private final JButton btnSave;
 	private DetectorProvider detectorProvider;
-	private JButton btnProcess;
+	private final JButton btnProcess;
 	private DetectorFactory detectorFactory;
-	private JLabel lblFitter;
 	private FitterProvider fitterProvider;
-	private JComboBox<String> comboBoxFitter;
+	private final JComboBox<String> comboBoxFitter;
 	private RendererProvider rendererProvider;
-	private JLabel lblRenderer;
-	private JComboBox<String> comboBoxRenderer;
-	private JCheckBox chkboxFilter;
-	private ActionProvider actionProvider;
+	private final JComboBox<String> comboBoxRenderer;
+	private final JCheckBox chkboxFilter;
 	private FitterFactory fitterFactory;
 	private RendererFactory rendererFactory;
-	private JLabel lblFile;
+	private final JLabel lblFile;
 	private Manager manager;
 	private ExtendableTable table;
 	private ImageLoader<T> tif;
@@ -123,25 +152,24 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private int widgetSelection = 0;
 	private boolean processed = false;
 	private ExtendableTable filteredTable = null;
-	private static int DETECTOR = 1;
-	private static int FITTER = 2;
-	private JProgressBar progressBar;
-	private JButton btnReset;
+	private static final int DETECTOR = 1;
+	private static final int FITTER = 2;
+	private final JProgressBar progressBar;
+	private final JButton btnReset;
 	private JPanel panelLower;
 	private JPanel panelFilter;
 	private Locale curLocale;
-	private JPanel panelProgress;
-	private JLabel lblEta;
+	private final JLabel lblEta;
 	private long start;
 	private AbstractModule saver;
-	public static String lastDir = System.getProperty("user.home"); 
+	private static String lastDir = System.getProperty("user.home");
+	//private Roi imageRoi;
 	private List<Double> cameraProperties;
 	private ExecutorService service = Executors.newCachedThreadPool();
 
 	/**
 	 * Create the frame.
-	 * 
-	 * @param imp
+	 *
 	 */
 	public Controller() {
 		addWindowListener(new WindowAdapter() {
@@ -175,15 +203,13 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		contentPane.setLayout(gbl_contentPane);
 
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				saveSettings(panelLower);
-				saveSettings(panelFilter);
-			}
-		});
+		tabbedPane.addChangeListener(e -> {
+            saveSettings(panelLower);
+            saveSettings(panelFilter);
+        });
 		tabbedPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-		panelLoc = new JPanel();
+		JPanel panelLoc = new JPanel();
 		panelLoc.setBorder(null);
 		tabbedPane.addTab("Localize", null, panelLoc, null);
 		GridBagLayout gbl_panelLoc = new GridBagLayout();
@@ -195,7 +221,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 		JPanel panelUpper = new JPanel();
 
-		lblPeakDet = new JLabel("Peak Detector");
+		JLabel lblPeakDet = new JLabel("Peak Detector");
 		GridBagConstraints gbc_panelUpper = new GridBagConstraints();
 		gbc_panelUpper.fill = GridBagConstraints.HORIZONTAL;
 		gbc_panelUpper.anchor = GridBagConstraints.NORTH;
@@ -206,7 +232,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		comboBoxPeakDet = new JComboBox<>();
 		comboBoxPeakDet.setPreferredSize(new Dimension(32, 26));
 
-		lblFitter = new JLabel("Fitter");
+		JLabel lblFitter = new JLabel("Fitter");
 
 		comboBoxFitter = new JComboBox<>();
 		comboBoxFitter.setPreferredSize(new Dimension(32, 26));
@@ -257,7 +283,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		panelUpper.setLayout(gl_panelUpper);
 		comboBoxPeakDet.addActionListener(this);
 
-		panelMiddle = new JPanel();
+		JPanel panelMiddle = new JPanel();
 		GridBagConstraints gbc_panelMiddle = new GridBagConstraints();
 		gbc_panelMiddle.fill = GridBagConstraints.HORIZONTAL;
 		gbc_panelMiddle.anchor = GridBagConstraints.NORTH;
@@ -268,15 +294,11 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		chckbxROI = new JCheckBox("use ROI");
 		chckbxROI.addActionListener(this);
 
-		lblSkipFrames = new JLabel("Skip frames");
+		JLabel lblSkipFrames = new JLabel("Skip frames");
+		JSpinner spinnerSkipFrames = new JSpinner();
 
-		spinnerSkipFrames = new JSpinner();
-		spinnerSkipFrames.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-			}
-		});
 		spinnerSkipFrames.setPreferredSize(new Dimension(40, 28));
-		spinnerSkipFrames.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
+		spinnerSkipFrames.setModel(new SpinnerNumberModel(0, 0, null, 1));
 		GroupLayout gl_panelMiddle = new GroupLayout(panelMiddle);
 		gl_panelMiddle.setHorizontalGroup(gl_panelMiddle.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panelMiddle.createSequentialGroup().addContainerGap().addComponent(chckbxROI)
@@ -302,7 +324,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		panelLoc.add(panelLower, gbc_panelLower);
 		panelLower.setLayout(new CardLayout(0, 0));
 
-		panelRecon = new JPanel();
+		JPanel panelRecon = new JPanel();
 		panelRecon.setBorder(null);
 		tabbedPane.addTab("Reconstruct", null, panelRecon, null);
 		GridBagLayout gbl_panelRecon = new GridBagLayout();
@@ -321,7 +343,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		gbc_panelRenderer.gridy = 0;
 		panelRecon.add(panelRenderer, gbc_panelRenderer);
 
-		lblRenderer = new JLabel("Renderer");
+		JLabel lblRenderer = new JLabel("Renderer");
 
 		comboBoxRenderer = new JComboBox<>();
 		comboBoxRenderer.addActionListener(this);
@@ -382,8 +404,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 		btnSave = new JButton("Save");
 		btnSave.addActionListener(this);
-		
-		panelProgress = new JPanel();
+
+		JPanel panelProgress = new JPanel();
 		GridBagConstraints gbc_panelProgress = new GridBagConstraints();
 		gbc_panelProgress.fill = GridBagConstraints.BOTH;
 		gbc_panelProgress.insets = new Insets(0, 0, 5, 0);
@@ -429,28 +451,25 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		settings = new HashMap<>();
 		table = new ExtendableTable();
 		manager = new Manager(service);
-		manager.addPropertyChangeListener(new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				if (evt.getPropertyName().equals("progress")) {
-					int value = (Integer) evt.getNewValue();
-					progressBar.setValue(value);
-					long current = System.currentTimeMillis();
-					long eta = 0;
-					if (value > 0)
-						eta = Math.round((current - start) * value / 1000);
-					lblEta.setText(String.valueOf(eta) + "sec");
-					start = current;
-				}
-				if (evt.getPropertyName().equals("state")) {
-					int value =  (int)evt.getNewValue();
-					if (value == Manager.STATE_DONE) {
-						processed = true;
-						if (rendererWindow != null) rendererWindow.repaint();
-					}
-				}
-			}
-		});
+		manager.addPropertyChangeListener(evt -> {
+            if (evt.getPropertyName().equals("progress")) {
+                int value = (Integer) evt.getNewValue();
+                progressBar.setValue(value);
+                long current = System.currentTimeMillis();
+                long eta = 0;
+                if (value > 0)
+                    eta = Math.round((current - start) * value / 1000);
+                lblEta.setText(String.valueOf(eta) + "sec");
+                start = current;
+            }
+            if (evt.getPropertyName().equals("state")) {
+                StateValue value = (StateValue) evt.getNewValue();
+                if (value == StateValue.DONE) {
+                    processed = true;
+                    if (rendererWindow != null) rendererWindow.repaint();
+                }
+            }
+        });
 		createInitialPanels();
 		createDetectorProvider();
 		createFitterProvider();
@@ -468,8 +487,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 			@Override
 			public void imageUpdated(ImagePlus ip) {
-				if (widgetSelection == 0) return;
-				else
 				if (widgetSelection == DETECTOR && ip == previewerWindow.getImagePlus() ){
 					detectorFactory.setAndCheckSettings(getConfigSettings(panelLower).getSettings());
 					detector = detectorFactory.getDetector();
@@ -649,7 +666,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				}
 			});
 			previewerWindow.setVisible(true);
-			final ImageProcessor ip = loc_im.getStack().getProcessor(loc_im.getSlice());
+			final ImageProcessor ip = previewerWindow.getImagePlus().getStack().getProcessor(previewerWindow.getImagePlus().getSlice());
 			final ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
 			new ContrastEnhancer().stretchHistogram(ip, 0.3, stats);
 			lblFile.setText(loc_im.getTitle());
@@ -706,8 +723,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		final Double offset = cameraProperties.get(0);
 		final Double em_gain = cameraProperties.get(1);
 		final Double conversion = cameraProperties.get(2);
-		final Queue<Frame<T>> list = new ArrayDeque<Frame<T>>();
-		PreProcessor<T> preprocessor = null;
+		final Queue<Frame<T>> list = new ArrayDeque<>();
+		PreProcessor<T> preprocessor;
 		try {
 			preprocessor = (PreProcessor<T>) detector;
 		} catch (Exception e) {
@@ -728,7 +745,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					im2phot = adu*conversion/em_gain;
 					it.get().setReal(im2phot);
 				}
-				Frame<T> curFrame = new ImgLib2Frame<T>(i, (int) curImage.dimension(0), (int) curImage.dimension(1), pixelSize, curImage);
+				Frame<T> curFrame = new ImgLib2Frame<>(i, (int) curImage.dimension(0), (int) curImage.dimension(1), pixelSize, curImage);
 				if (i==frameNumber) origFrame=curFrame;
 				list.add(curFrame);
 			}
@@ -774,7 +791,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	}
 
 	private void detectorPreview() {
-		// TODO constrain to current ROI
 		final ImagePlus img = previewerWindow.getImagePlus();
 		img.killRoi();
 		final int frameNumber = img.getCurrentSlice();
@@ -825,7 +841,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		final int frameNumber = img.getCurrentSlice();
 		final double pixelSize = previewerWindow.getImagePlus().getCalibration().pixelDepth;
 		
-		ImageProcessor ip = previewerWindow.getImagePlus().getStack().getProcessor(frameNumber);;
+		ImageProcessor ip = previewerWindow.getImagePlus().getStack().getProcessor(frameNumber);
 		Roi currentRoi = previewerWindow.getImagePlus().getRoi();
 		if (currentRoi != null){
 			ip.setRoi(currentRoi.getBounds());
@@ -893,6 +909,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 						settings.put(RendererFactory.KEY_yBins, new_ybins);
 						rendererShow(settings);
 					} catch (NullPointerException ne) {
+						System.out.println(ne.getMessage());
 					}
 				}
 			}
@@ -1008,9 +1025,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	
 	private void createInitialPanels(){
 		final ConfigurationPanel panelFirst = new ConfigurationPanel() {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -1024,9 +1038,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		};
 		panelLower.add(panelFirst, "FIRST");
 		final ConfigurationPanel panelSecond = new ConfigurationPanel() {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -1040,21 +1051,19 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		};
 		panelFilter.add(panelSecond, "SECOND");
 		final FilterPanel fp = new FilterPanel();
-		fp.addPropertyChangeListener(ConfigurationPanel.propertyName, new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				if (table.filtersCollection.isEmpty()) {
-					filteredTable = null;
-				} else {
-					filteredTable = table.filter();
-				}
-				if (renderer != null)
-					rendererShow(settings);
-			}
-		});
+		fp.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
+            if (table.filtersCollection.isEmpty()) {
+                filteredTable = null;
+            } else {
+                filteredTable = table.filter();
+            }
+            if (renderer != null)
+                rendererShow(settings);
+        });
 		panelFilter.add(fp, FilterPanel.KEY);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void createDetectorProvider() {
 		detectorProvider = new DetectorProvider();
 		final List<String> visibleKeys = detectorProvider.getVisibleKeys();
@@ -1066,19 +1075,15 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			detectorNames.add(detectorProvider.getFactory(key).getName());
 			infoTexts.add(detectorProvider.getFactory(key).getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, new PropertyChangeListener() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public void propertyChange(PropertyChangeEvent evt) {
-					Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
-					detectorFactory.setAndCheckSettings(value);
-					detector = detectorFactory.getDetector();
-					if (detectorFactory.hasPreProcessing())
-						ppPreview();
-					else
-						detectorPreview();
-				}
-			});
+			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
+                Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
+                detectorFactory.setAndCheckSettings(value);
+                detector = detectorFactory.getDetector();
+                if (detectorFactory.hasPreProcessing())
+                    ppPreview();
+                else
+                    detectorPreview();
+            });
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = detectorNames.toArray(new String[] {});
@@ -1098,12 +1103,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
 			if (!factory.setAndCheckSettings(panelDown.getSettings())) continue;
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, new PropertyChangeListener() {
-				@Override
-				public void propertyChange(PropertyChangeEvent evt) {
-					fitterPreview();
-				}
-			});
+			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> fitterPreview());
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = fitterNames.toArray(new String[] {});
@@ -1111,6 +1111,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		comboBoxFitter.setRenderer(new ToolTipRenderer(infoTexts));
 	}
 
+	@SuppressWarnings("unchecked")
 	private void createRendererProvider() {
 		rendererProvider = new RendererProvider();
 		final List<String> visibleKeys = rendererProvider.getVisibleKeys();
@@ -1122,17 +1123,13 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			rendererNames.add(factory.getName());
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, new PropertyChangeListener() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public void propertyChange(PropertyChangeEvent evt) {
-					Map<String, Object> map = (Map<String, Object>) evt.getNewValue();
-					if (processed)
-						rendererShow(map);
-					else
-						rendererPreview(map);
-				}
-			});
+			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
+                Map<String, Object> map = (Map<String, Object>) evt.getNewValue();
+                if (processed)
+                    rendererShow(map);
+                else
+                    rendererPreview(map);
+            });
 			panelFilter.add(panelDown, key);
 		}
 		String[] names = rendererNames.toArray(new String[] {});
@@ -1142,7 +1139,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 
 	@SuppressWarnings("unused")
 	private void createActionProvider() {
-		actionProvider = new ActionProvider();
+		ActionProvider actionProvider = new ActionProvider();
 		final List<String> visibleKeys = actionProvider.getVisibleKeys();
 		final List<String> actionNames = new ArrayList<>(visibleKeys.size());
 		final List<String> infoTexts = new ArrayList<>(visibleKeys.size());
@@ -1155,11 +1152,11 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	}
 
 	
-class ToolTipRenderer extends DefaultListCellRenderer {
+private class ToolTipRenderer extends DefaultListCellRenderer {
 		private static final long serialVersionUID = 1L;
-		List<String> tooltips;
+		final List<String> tooltips;
 
-		public ToolTipRenderer(List<String> tooltips) {
+		ToolTipRenderer(List<String> tooltips) {
 			this.tooltips = tooltips;
 		}
 

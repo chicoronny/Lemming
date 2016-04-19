@@ -2,9 +2,6 @@ package org.lemming.math;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-
-import net.imglib2.type.numeric.RealType;
 
 /**
  * Median algorithms QuickSort and QuickSelect
@@ -12,63 +9,6 @@ import net.imglib2.type.numeric.RealType;
  *
  */
 public class QuickSelect {
-	public static <T extends RealType<T>> Long binapprox(List<T> values) {
-		double sum = 0d;
-		for (T i : values)
-			sum += i.getRealDouble();
-		double mean = sum / values.size();
-		double sumDev = 0;
-		for (T i : values)
-			sumDev += Math.pow(i.getRealDouble() - mean, 2);
-		double stdDev = Math.sqrt(sumDev / values.size());
-
-		return Math.round(stdDev);
-	}
-
-	public static <T extends Comparable<T>> T select(final List<T> values,
-			final int kin) {
-		int k = kin;
-		int left = 0;
-		int right = values.size() - 1;
-		Random rand = new Random();
-		while (right >= left) {
-			int partionIndex = rand.nextInt(right - left + 1) + left;
-			int newIndex = partition(values, left, right, partionIndex);
-			int q = newIndex - left + 1;
-			if (k == q) {
-				return values.get(newIndex);
-			} else if (k < q) {
-				right = newIndex - 1;
-			} else {
-				k -= q;
-				left = newIndex + 1;
-			}
-		}
-		return null;
-	}
-
-	private static <T extends Comparable<T>> int partition(
-			final List<T> values, final int left, final int right,
-			final int partitionIndex) {
-		T partionValue = values.get(partitionIndex);
-		int newIndex = left;
-		T temp = values.get(partitionIndex);
-		values.set(partitionIndex, values.get(right));
-		values.set(right, temp);
-		for (int i = left; i < right; i++) {
-			if (values.get(i).compareTo(partionValue) < 0) {
-				temp = values.get(i);
-				values.set(i, values.get(newIndex));
-				values.set(newIndex, temp);
-				newIndex++;
-			}
-		}
-		temp = values.get(right);
-		values.set(right, values.get(newIndex));
-		values.set(newIndex, temp);
-		return newIndex;
-	}
-
 	/**
 	 * Quicksort with median-of-three partitioning functions nearly the same as
 	 * normal quicksort with the only difference being how the pivot item is
@@ -83,14 +23,13 @@ public class QuickSelect {
 	 * the middle element as the pivot thereby reducing the inefficiency found in
 	 * normal quicksort.
 	 * Places the kth smallest item in a[k-1].
-	 * 
+	 *
 	 * @param a
 	 *            an array of Comparable items.
 	 * @param k
 	 *            the desired rank (1 is minimum) in the entire array.
-	 * @param T	
-	 * 			  data type
-	 * @return
+	 * @param <T></T> data type
+	 * @return T result
 	 */
 	public static <T extends Comparable<T>> T three(final List<T> a, final int k) {
 		three(a, 0, a.size() - 1, k);
@@ -110,7 +49,6 @@ public class QuickSelect {
 	 *            the right-most index of the subarray.
 	 * @param k
 	 *            the desired rank (1 is minimum) in the entire array.
-	 * @return
 	 */
 	private static <T extends Comparable<T>> void three(List<T> a,
 			final int low, final int high, final int k) {
@@ -133,10 +71,10 @@ public class QuickSelect {
 			// Begin partitioning
 			int i, j;
 			for (i = low, j = high - 1;;) {
-				while (a.get(++i).compareTo(pivot) < 0)
-					;
-				while (pivot.compareTo(a.get(--j)) < 0)
-					;
+				while (a.get(++i).compareTo(pivot) < 0) {
+                }
+				while (pivot.compareTo(a.get(--j)) < 0) {
+                }
 				if (i >= j)
 					break;
 				Collections.swap(a, i, j);
@@ -160,8 +98,6 @@ public class QuickSelect {
 	 *            an array of Comparable items.
 	 * @param low
 	 *            the left-most index of the subarray.
-	 * @param n
-	 *            the number of items to sort.
 	 */
 	private static <T extends Comparable<T>> void insertionSort(List<T> a,
 			final int low, final int high) {
@@ -225,7 +161,7 @@ public class QuickSelect {
 		
 		// Definitions
 		int left = 0;
-		int rem = 0;            
+		int rem;
 		int step = 1;
 		int i,j;
 		T median;

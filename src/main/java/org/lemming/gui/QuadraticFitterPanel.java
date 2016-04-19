@@ -8,7 +8,6 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import java.io.File;
 import org.lemming.tools.WaitForChangeListener;
 
 public class QuadraticFitterPanel extends ConfigurationPanel {
@@ -18,9 +17,7 @@ public class QuadraticFitterPanel extends ConfigurationPanel {
 	 */
 	private static final long serialVersionUID = 3081886846323191618L;
 	public static final String KEY_QUAD_WINDOW_SIZE = "QUAD_WINDOW_SIZE";
-	private JSpinner spinnerWindowSize;
-	protected File calibFile;
-	protected File camFile;
+	private final JSpinner spinnerWindowSize;
 
 	public QuadraticFitterPanel() {
 		setBorder(null);
@@ -34,7 +31,7 @@ public class QuadraticFitterPanel extends ConfigurationPanel {
 				fireChanged();
 			}
 		}));
-		spinnerWindowSize.setModel(new SpinnerNumberModel(new Integer(10), null, null, new Integer(1)));
+		spinnerWindowSize.setModel(new SpinnerNumberModel(10, null, null, 1));
 		
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(

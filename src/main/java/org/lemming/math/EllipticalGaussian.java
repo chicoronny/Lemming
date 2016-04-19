@@ -1,10 +1,5 @@
 package org.lemming.math;
 
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.IntervalView;
-
-import java.util.Arrays;
-
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
 import org.apache.commons.math3.optim.OptimizationData;
@@ -20,7 +15,6 @@ import org.apache.commons.math3.util.FastMath;
 public class EllipticalGaussian implements OptimizationData {
 	private int[] xgrid, ygrid;
 	double[] params;
-	double[] initialGuess;
 
 	private static int INDEX_X0 = 0;
 	private static int INDEX_Y0 = 1;
@@ -78,24 +72,7 @@ public class EllipticalGaussian implements OptimizationData {
         };
     }
  
-    public <T extends RealType<T>> double[] getInitialGuess(IntervalView<T> interval) {
-		initialGuess = new double[PARAM_LENGTH];
-	    Arrays.fill(initialGuess, 0);
-   
-	    CentroidFitterRA<T> cf = new CentroidFitterRA<T>(interval, 0);
-	    double[] centroid = cf.fit();
-
-		initialGuess[INDEX_X0] = centroid[INDEX_X0];
-		initialGuess[INDEX_Y0] = centroid[INDEX_Y0];    
-	    initialGuess[INDEX_SX] = centroid[INDEX_SX];
-	    initialGuess[INDEX_SY] = centroid[INDEX_SY];
-	    initialGuess[INDEX_I0] = centroid[INDEX_I0];
-	    initialGuess[INDEX_Bg] = 0;
-		
-		return initialGuess;
-	}
-
-	///////////////////////////////////////////////////////////////
+ 	///////////////////////////////////////////////////////////////
 	// Math functions
 	private static double erf(double x) {
 		return Erf.erf(x);

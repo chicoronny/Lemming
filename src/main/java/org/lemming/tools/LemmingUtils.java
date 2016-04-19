@@ -15,7 +15,6 @@ import java.awt.Rectangle;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +30,6 @@ import org.lemming.interfaces.Element;
 import org.lemming.interfaces.Frame;
 import org.lemming.interfaces.LocalizationInterface;
 import org.lemming.pipeline.ImgLib2Frame;
-import org.lemming.pipeline.Localization;
 
 import ij.process.FloatPolygon;
 
@@ -50,16 +48,6 @@ public class LemmingUtils {
 			polygon.addPoint(loc.getX().floatValue() / pixelSize + rect.x, loc.getY().floatValue() / pixelSize + rect.y);
 		}
 		return polygon;
-	}
-	
-	public static List<Element> pointsToLocs(FloatPolygon p, float pixelSize, long frame) {
-		List<Element> me = new ArrayList<>();
-		float[] xs = p.xpoints;
-		float[] ys = p.ypoints;
-		for (int i=0;i<xs.length;i++) {
-			me.add(new Localization(xs[i]*pixelSize, ys[i]*pixelSize, 1, frame));
-		}
-		return me;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -81,20 +69,7 @@ public class LemmingUtils {
 		}
 		return theImage;
 	}
-	
-	public static <T extends RealType<T>> short[] convertToShort(Frame<T> frame) {
-		
-		final RandomAccessibleInterval<T> rai = frame.getPixels();
-		
-		short[] pixels = new short[frame.getWidth()*frame.getHeight()];
-		Cursor<T> cursor = Views.iterable(rai).cursor();
-		int index=0;
-		while(cursor.hasNext())
-			pixels[index++]=(short) Math.round(cursor.next().getRealFloat());
 
-		return pixels;
-	}
-	
 	public static <T extends RealType<T>> Frame<T> substract(Frame<T> framePairA, Frame<T> framePairB) {
 		RandomAccessibleInterval<T> intervalA = framePairA.getPixels();
 		RandomAccessibleInterval<T> intervalB = framePairB.getPixels();
@@ -109,7 +84,7 @@ public class LemmingUtils {
 			val = val < 0 ? 0 : val; // check for negative values
 			cursorA.get().setReal(val);
 		}
-		return new ImgLib2Frame<T>(framePairA.getFrameNumber(), framePairA.getWidth(), framePairA.getHeight(), framePairA.getPixelDepth(), intervalA);
+		return new ImgLib2Frame<>(framePairA.getFrameNumber(), framePairA.getWidth(), framePairA.getHeight(), framePairA.getPixelDepth(), intervalA);
 	}
 	
 
@@ -139,19 +114,12 @@ public class LemmingUtils {
 		}
 		return new IndexColorModel(8, 256, reds, greens, blues);
 	}
-	
-	/**
-     * Compute the min and max for any {@link Iterable}, like an {@link Img}.
-     *
-     * The only functionality we need for that is to iterate. Therefore we need no {@link Cursor}
-     * that can localize itself, neither do we need a {@link RandomAccess}. So we simply use the
-     * most simple interface in the hierarchy.
-     *
-     * @param input - the input that has to just be {@link Iterable}
-     * @param min - the type that will have min
-     * @param max - the type that will have max
-	 * @return 
-     */
+
+    /* Compute the max for any {@link Iterable}, like an {@link Img}.
+    *
+    * The only functionality we need for that is to iterate. Therefore we need no {@link Cursor}
+    * that can localize itself, neither do we need a {@link RandomAccess}. So we simply use the
+    * most simple interface in the hierarchy.*/
     public static < T extends Comparable< T > & Type< T > > T computeMax(
         final IterableInterval< T > input){
         /// create a cursor for the image (the order does not matter)
@@ -172,6 +140,11 @@ public class LemmingUtils {
         return max;
     }
     
+    /* Compute the min for any {@link Iterable}, like an {@link Img}.
+    *
+    * The only functionality we need for that is to iterate. Therefore we need no {@link Cursor}
+    * that can localize itself, neither do we need a {@link RandomAccess}. So we simply use the
+    * most simple interface in the hierarchy.*/
     public static < T extends Comparable< T > & Type< T > > T computeMin(
         final IterableInterval< T > input){
         /// create a cursor for the image (the order does not matter)
@@ -187,11 +160,11 @@ public class LemmingUtils {
             type = cursor.next();
  
             if ( type.compareTo( min ) < 0 )
-            	min.set( type );
+                min.set( type );
         }
         return min;
     }
-    
+
     public static <T> long computeBin(final Histogram1d<T> hist) {
 		long[] histogram = hist.toLongArray();
 		// Otsu's threshold algorithm
@@ -217,7 +190,7 @@ public class LemmingUtils {
 
 		Sk = 0;
 		N1 = histogram[0]; // The entry for zero intensity
-		BCV = 0;
+		//BCV = 0;
 		BCVmax = 0;
 		kStar = 0;
 
@@ -257,22 +230,20 @@ public class LemmingUtils {
     
     public static String doubleArrayToString(double[] array){
 		String result ="";
-		for (int num=0; num<array.length;num++)
-			result += array[num] + ",";
+		for (double anArray : array) result += anArray + ",";
 		result = result.substring(0, result.length()-1);
 		return result;
 	}
 	
-    public static double[] stringToDoubleArray(String line){
+    private static double[] stringToDoubleArray(String line){
 		String[] s = line.split(",");
 		double[] result = new double[s.length];
-		for (int n=0;n<s.length;n++)
-			result[n]=Double.parseDouble(s[n].trim());
+		for (int n=0;n<s.length;n++) result[n] = Double.parseDouble(s[n].trim());
 		return result;
 	}
     
     public static Map<String,Object> readCSV(String path){
-		Map<String,Object>  map = new HashMap<String, Object>();
+		Map<String,Object>  map = new HashMap<>();
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(path));
 			String line=br.readLine();
@@ -304,85 +275,13 @@ public class LemmingUtils {
 			line=br.readLine();
 			map.put("ellipticity", new PolynomialFunction(stringToDoubleArray(line)));
 			br.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 		return map;
 	}
-	
-	static public Map<String, List<Double>> readCSVOld(String path){
-		final Locale curLocale = Locale.getDefault();
-		final Locale usLocale = new Locale("en", "US"); // setting us locale
-		Locale.setDefault(usLocale);
-		
-		List<String> list = new ArrayList<>();
-		List<Double> param = new ArrayList<>(); 
-		List<Double> zgrid = new ArrayList<>();
-		List<Double> Calibcurve = new ArrayList<>();
-		Map<String,List<Double>> result = new HashMap<>();
-		
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(path));
 
-			String line;
-			br.readLine();
-			while ((line=br.readLine())!=null){
-				if (line.contains("--")) break;
-				list.add(line);
-			}
-			
-			if ((line=br.readLine())!=null){
-				String[] s = line.split(",");
-				for (int i = 0; i < s.length; i++)
-					param.add(Double.parseDouble(s[i].trim()));
-			}
-			br.close();
-			
-			for (String t : list){
-				String[] splitted = t.split(",");
-				zgrid.add(Double.parseDouble(splitted[0].trim()));
-				Calibcurve.add(Double.parseDouble(splitted[3].trim()));
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		result.put("param", param);
-		result.put("zgrid", zgrid);
-		result.put("Calibcurve", Calibcurve);
-
-		Locale.setDefault(curLocale);
-		return result;
-	}
-
-	public static List<Double> readProps(String path) {
-		final Locale curLocale = Locale.getDefault();
-		final Locale usLocale = new Locale( "en", "US" ); // setting us locale
-		Locale.setDefault( usLocale );
-		
-		List<Double> params = new ArrayList<>();
-		try {
-			FileReader reader = new FileReader( new File(path) );
-			final Properties props = new Properties();
-			props.load( reader );
-			String[] paramParser = props.getProperty( "FitParameter", "" ).split( "[,\n]" );
-			for (int i=0; i<paramParser.length; i++)
-				params.add(Double.parseDouble(paramParser[i].trim()));
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		Locale.setDefault( curLocale );
-		return params;
-	}
-	
 	public static List<Double> readCameraSettings(String path) {
 		final Locale curLocale = Locale.getDefault();
 		final Locale usLocale = new Locale( "en", "US" ); // setting us locale
@@ -396,8 +295,6 @@ public class LemmingUtils {
 			settings.add(Double.parseDouble(props.getProperty( "Offset", "" )));
 			settings.add(Double.parseDouble(props.getProperty( "EM-Gain", "" )));
 			settings.add(Double.parseDouble(props.getProperty( "Conversion", "" )));			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

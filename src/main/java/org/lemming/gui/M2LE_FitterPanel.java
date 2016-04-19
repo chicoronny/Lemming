@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
-import org.lemming.math.Calibrator;
 import org.lemming.tools.WaitForChangeListener;
 import org.lemming.tools.WaitForKeyListener;
 
@@ -32,19 +31,11 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 	private static final long serialVersionUID = 3081886846323191618L;
 	public static final String KEY_WINDOW_SIZE = "WINDOW_SIZE";
 	public static final String KEY_USABLE_PIXEL = "USABLE_PIXEL";
-	public static final String KEY_CALIBRATION_FILENAME = "CALIBRATION_FILENAME";
-	public static final String KEY_STEPSIZE = "STEPSIZE";
-	private JSpinner spinnerWindowSize;
-	private JButton btnCalibration;
-	private JLabel lblCalibration;
-	protected File calibFile;
-	protected File camFile;
-	protected boolean doubleClicked = false;
-	protected int default_step = 10;
-	protected Calibrator calibrator;
-	private JButton btnNewCalibration;
-	private JLabel lblUsablePixel;
-	private JTextField textFieldUsablePixel;
+	private static final String KEY_CALIBRATION_FILENAME = "CALIBRATION_FILENAME";
+	private final JSpinner spinnerWindowSize;
+	private final JLabel lblCalibration;
+	private File calibFile;
+	private final JTextField textFieldUsablePixel;
 
 	public M2LE_FitterPanel() {
 		setBorder(null);
@@ -58,12 +49,12 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 				fireChanged();
 			}
 		}));
-		spinnerWindowSize.setModel(new SpinnerNumberModel(new Integer(5), null, null, new Integer(1)));
+		spinnerWindowSize.setModel(new SpinnerNumberModel(5, null, null, 1));
 		
 		lblCalibration = new JLabel("File");
 		lblCalibration.setAlignmentX(0.5f);
-		
-		btnCalibration = new JButton("Calib. File");
+
+		JButton btnCalibration = new JButton("Calib. File");
 		btnCalibration.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
@@ -78,15 +69,15 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		        fireChanged();
 			}
 		});
-		
-		btnNewCalibration = new JButton("New Calibration");
+
+		JButton btnNewCalibration = new JButton("New Calibration");
 		btnNewCalibration.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				calibrate();
 			}
 		});
-		
-		lblUsablePixel = new JLabel("usable pixel");
+
+		JLabel lblUsablePixel = new JLabel("usable pixel");
 		lblUsablePixel.setToolTipText("fraction of usable pixel");
 		
 		textFieldUsablePixel = new JTextField();
@@ -142,7 +133,7 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		setLayout(groupLayout);
 	}
 
-	protected void calibrate() {
+	private void calibrate() {
         CalibrationDialog dlg = new CalibrationDialog(getFocusCycleRootAncestor());
         dlg.setLocationRelativeTo(getFocusCycleRootAncestor());
         dlg.setVisible(true);
@@ -173,10 +164,6 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 			return settings;
 		}
 		settings.put(KEY_CALIBRATION_FILENAME, calibFile.getAbsolutePath());
-		if (camFile == null){
-			//IJ.error("Please provide a Camera File!");
-			return settings;
-		}
 		return settings;
 	}
 }

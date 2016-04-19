@@ -24,20 +24,20 @@ public interface DetectorFactory extends PluginInterface{
 	 * the map to test.
 	 * @return <code>true</code> if the settings map is valid.
 	 */
-	public boolean setAndCheckSettings( final Map< String, Object > settings );
+	boolean setAndCheckSettings(final Map<String, Object> settings);
 	
 	/**
-	 *  @param <T>
+	 * @param <T> data type
 	 * @return  Module to process
 	 */
-	public <T extends RealType<T> & NativeType<T>> Detector<T> getDetector();
+	<T extends RealType<T> & NativeType<T>> Detector<T> getDetector();
 	
 	/**
-	 * Returns a new GUI panel able to configure the settings suitable for this
+	 * @return  getConfigurationPanel Returns a new GUI panel able to configure the settings suitable for this
 	 * specific detector factory.
 	 */
-	public ConfigurationPanel getConfigurationPanel();
+	ConfigurationPanel getConfigurationPanel();
 	
-	public boolean hasPreProcessing();
+	boolean hasPreProcessing();
 	
 }

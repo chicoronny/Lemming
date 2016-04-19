@@ -278,63 +278,46 @@ __device__ void kernel_CentroidFitter(const int sz, const float *data, float *sx
 	float tmpsx = 0.0f; float tmpsx_std = 0.0f;
 	float tmpsy = 0.0f; float tmpsy_std = 0.0f;
 	float tmpsum = 0.0f; float tmpsum_std = 0.0f;
-	float min = 10000.0f;
+	//float min = 10000.0f;
 	int ii, jj;
-	float total = 0.0f;
-	int center = (sz - 1) / 2;
+	//float total = 0.0f;
+	//int center = (sz - 1) / 2;
 
-	for (ii = 0; ii<sz; ii++)
-		for (jj = 0; jj<sz; jj++)
-			total += data[sz*jj + ii];
+	//for (ii = 0; ii<sz; ii++)
+	//	for (jj = 0; jj<sz; jj++)
+	//		total += data[sz*jj + ii];
 
-	float thrsh = total / (sz*sz);
+	//float thrsh = total / (sz*sz);
 	for (jj = 0; jj<sz; jj++)
 		for (ii = 0; ii<sz; ii++){
-			if (data[sz*jj + ii]>thrsh){
+			//if (data[sz*jj + ii]>thrsh){
 				tmpsx += data[sz*jj + ii] * ii;
 				tmpsy += data[sz*jj + ii] * jj;
 				tmpsum += data[sz*jj + ii];
-			}
+			//}
 		}
 
 	*sx = tmpsx / tmpsum;
 	*sy = tmpsy / tmpsum;
 
-	if (*sx> (center + 1)){
-		*sx = center + 1;
-	}
-	else if (*sx<(center - 1)){
-		*sx = center - 1;
-	}
-
-
-	if (*sy >(center + 1)){
-		*sy = center + 1;
-	}
-	else if (*sy <(center - 1)){
-		*sy = center - 1;
-	}
-
-
-	for (ii = 0; ii<sz; ii++)
+	/*for (ii = 0; ii<sz; ii++)
 		for (jj = 0; jj<sz; jj++) {
 			if (data[sz*jj + ii]<min){
 				min = data[sz*jj + ii];
 			}
-		}
+		}*/
 
 	for (ii = 0; ii<sz; ii++)
 		for (jj = 0; jj<sz; jj++) {
-			if (data[sz*jj + ii]>thrsh){
-				tmpsum_std += (data[sz*jj + ii] - min);
-				tmpsx_std += (data[sz*jj + ii] - min)*(ii - *sx)*(ii - *sx);
-				tmpsy_std += (data[sz*jj + ii] - min)*(jj - *sy)*(jj - *sy);
-			}
+			//if (data[sz*jj + ii]>thrsh){
+				tmpsum_std += (data[sz*jj + ii]);
+				tmpsx_std += (data[sz*jj + ii])*(ii - *sx)*(ii - *sx);
+				tmpsy_std += (data[sz*jj + ii])*(jj - *sy)*(jj - *sy);
+			//}
 		}
-	tmpsx_std /= tmpsum_std;
-	tmpsy_std /= tmpsum_std;
-	*sx_std = tmpsx_std;
-	*sy_std = tmpsy_std;
+		
+	*sx_std = sqrtf(tmpsx_std / tmpsum_std /sz);
+	*sy_std = sqrtf(tmpsy_std / tmpsum_std /sz);
 }
 
 //*******************************************************************************************
@@ -620,7 +603,7 @@ float *d_Parameters, float *d_CRLBs, float *d_LogLikelihood, int Nfits){
 	float d2udt2[NV];
 	float NR_Numerator[NV], NR_Denominator[NV];
 	float theta[NV];
-	float maxjump[NV] = { 1.0f, 1.0f, 200.0f, 10.0f, 0.1f, 0.1f };
+	float maxjump[NV] = { 1.0f, 1.0f, 1000.0f, 50.0f, 0.25f, 0.25f };
 	float g[NV] = { 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f };
 	float Nmax;
 	float diff;
@@ -636,11 +619,11 @@ float *d_Parameters, float *d_CRLBs, float *d_LogLikelihood, int Nfits){
 	float *s_data = d_data + (sz*sz*bx*BlockSize + sz*sz*tx);
 
 	//initial values
-	kernel_CenterofMass2D(sz, s_data, &theta[0], &theta[1]);
+	//kernel_CenterofMass2D(sz, s_data, &theta[0], &theta[1]);
+	kernel_CentroidFitter(sz, s_data, &theta[0], &theta[1], &theta[4], &theta[5]);
+	PSFSigma = 2*pi*theta[4]*theta[5];
 	kernel_GaussFMaxMin2D(sz, PSFSigma, s_data, &Nmax, &theta[3]);
-	theta[2] = max(0.0f, (Nmax - theta[3]) * 2 * pi*PSFSigma*PSFSigma);
-	theta[4] = PSFSigma;
-	theta[5] = PSFSigma;
+	theta[2] = max(0.0f, Nmax * PSFSigma);
 	d2udt2[2] = 0.0f;
 	dudt[3] = 1.0f;
 	d2udt2[3] = 0.0f;
@@ -685,7 +668,7 @@ float *d_Parameters, float *d_CRLBs, float *d_LogLikelihood, int Nfits){
 		for (ll = 0; ll<NV; ll++){
 			diff = g[ll] * min(max(NR_Numerator[ll] / NR_Denominator[ll], -maxjump[ll]), maxjump[ll]);
 			theta[ll] -= diff;
-			if(kk>iterations-10)
+			if(kk>=iterations-10)
 				sums[ll]+=abs(diff);
 		}
 

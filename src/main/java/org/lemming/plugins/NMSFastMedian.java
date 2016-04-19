@@ -37,19 +37,19 @@ import net.imglib2.view.Views;
 
 public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends SingleRunModule implements PreProcessor<T> {
 	
-	public static final String NAME = "NMS Fast Median Filter";
-	public static final String KEY = "NMSFASTMEDIAN";
-	public static final String INFO_TEXT = "<html>" + "NMS detector with Fast Median Filter using a 3x3 kernel times the given frames for calculating an approximate median."
+	private static final String NAME = "NMS Fast Median Filter";
+	private static final String KEY = "NMSFASTMEDIAN";
+	private static final String INFO_TEXT = "<html>" + "NMS detector with Fast Median Filter using a 3x3 kernel times the given frames for calculating an approximate median."
 			+ "It has an option to interpolate between blocks" + "</html>";
-	private int nFrames;
-	private boolean interpolating;
-	private Queue<Frame<T>> frameList = new ArrayDeque<>();
+	private final int nFrames;
+	private final boolean interpolating;
+	private final Queue<Frame<T>> frameList = new ArrayDeque<>();
 	private int counter = 0;
 	private int lastListSize = 0;
 	private Frame<T> frameA = null;
 	private Frame<T> frameB = null;
-	private double threshold;
-	private int n_;
+	private final double threshold;
+	private final int n_;
 
 	public NMSFastMedian(final int numFrames, final boolean interpolating, final double threshold, final int size) {
 		this.nFrames = numFrames;
@@ -72,7 +72,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 		counter++;
 
 		if (frame.isLast()) {// process the rest;
-			Queue<Frame<T>> transferList = new ArrayDeque<Frame<T>>();
+			Queue<Frame<T>> transferList = new ArrayDeque<>();
 			transferList.addAll(frameList);
 			frameB = preProcess(transferList, true);
 			if (interpolating) 
@@ -86,7 +86,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 		}
 
 		if (counter % nFrames == 0) {// make a new list for each Callable
-			final Queue<Frame<T>> transferList = new ArrayDeque<Frame<T>>();
+			final Queue<Frame<T>> transferList = new ArrayDeque<>();
 			transferList.addAll(frameList);
 			frameB = preProcess(transferList, false);
 			if (interpolating) {
@@ -105,7 +105,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 	}
 	
 	public Frame<T> preProcess(final Queue<Frame<T>> list, final boolean isLast) {
-		Frame<T> newFrame = null;
+		Frame<T> newFrame;
 		if (!list.isEmpty()) {
 			final Frame<T> firstFrame = list.peek();
 			final RandomAccessibleInterval<T> firstInterval = firstFrame.getPixels(); // handle borders
@@ -118,7 +118,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			final RectangleShape outshape = new RectangleShape(1, false); // 3x3 kernel
 			Cursor<T> outcursor = Views.iterable(source).cursor();
 
-			List<RandomAccess<T>> cursorList = new FastTable<RandomAccess<T>>();
+			List<RandomAccess<T>> cursorList = new FastTable<>();
 
 			for (Frame<T> currentFrame : list) {
 				RandomAccessibleInterval<T> currentInterval = currentFrame.getPixels();
@@ -128,7 +128,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			for (final Neighborhood<T> localNeighborhood : outshape.neighborhoods(source)) {
 				outcursor.fwd();
 				final Cursor<T> localCursor = localNeighborhood.cursor();
-				final List<Double> values = new FastTable<Double>();
+				final List<Double> values = new FastTable<>();
 				while (localCursor.hasNext()) {
 					localCursor.fwd();
 					for (RandomAccess<T> currentCursor : cursorList) {
@@ -143,7 +143,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			// Borders
 			final Cursor<T> top = Views.interval(out, Intervals.createMinMax(0, 0, dims[0] - 1, 0)).cursor();
 			while (top.hasNext()) {
-				final List<Double> values = new FastTable<Double>();
+				final List<Double> values = new FastTable<>();
 				top.fwd();
 				for (RandomAccess<T> currentCursor : cursorList) {
 					currentCursor.setPosition(top);
@@ -154,7 +154,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 			final Cursor<T> left = Views.interval(out, Intervals.createMinMax(0, 1, 0, dims[1] - 2)).cursor();
 			while (left.hasNext()) {
-				final List<Double> values = new FastTable<Double>();
+				final List<Double> values = new FastTable<>();
 				left.fwd();
 				for (RandomAccess<T> currentCursor : cursorList) {
 					currentCursor.setPosition(left);
@@ -165,7 +165,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 			final Cursor<T> right = Views.interval(out, Intervals.createMinMax(dims[0] - 1, 1, dims[0] - 1, dims[1] - 2)).cursor();
 			while (right.hasNext()) {
-				final List<Double> values = new FastTable<Double>();
+				final List<Double> values = new FastTable<>();
 				right.fwd();
 				for (RandomAccess<T> currentCursor : cursorList) {
 					currentCursor.setPosition(right);
@@ -176,7 +176,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 			final Cursor<T> bottom = Views.interval(out, Intervals.createMinMax(0, dims[1] - 1, dims[0] - 1, dims[1] - 1)).cursor();
 			while (bottom.hasNext()) {
-				final List<Double> values = new FastTable<Double>();
+				final List<Double> values = new FastTable<>();
 				bottom.fwd();
 				for (RandomAccess<T> currentCursor : cursorList) {
 					currentCursor.setPosition(bottom);
@@ -186,10 +186,10 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 				if (median != null) bottom.get().setReal(median);
 			}
 
-			newFrame = new ImgLib2Frame<T>(
+			newFrame = new ImgLib2Frame<>(
 				firstFrame.getFrameNumber(), firstFrame.getWidth(), firstFrame.getHeight(), firstFrame.getPixelDepth(), out);
 		} else {
-			newFrame = new ImgLib2Frame<T>(0, 1, 1, 1, null);
+			newFrame = new ImgLib2Frame<>(0, 1, 1, 1, null);
 		}
 		if (isLast) newFrame.setLast(true);
 		return newFrame;
@@ -218,7 +218,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 
 			final Frame<T> filtered = LemmingUtils.substract(
-					new ImgLib2Frame<T>(frameA.getFrameNumber() + i, frameA.getWidth(), frameA.getHeight(), frameA.getPixelDepth(), outFrame), transferList.poll());
+					new ImgLib2Frame<>(frameA.getFrameNumber() + i, frameA.getWidth(), frameA.getHeight(), frameA.getPixelDepth(), outFrame), transferList.poll());
 
 			newOutput(detect(filtered));
 		}
@@ -248,10 +248,10 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 
 		int i, j, ii, jj, ll, kk;
 		int mi, mj;
-		boolean failed = false;
+		boolean failed;
 		long width_ = interval.dimension(0);
 		long height_ = interval.dimension(1);
-		List<Element> found = new FastTable<Element>();
+		List<Element> found = new FastTable<>();
 		T first,second = max,third;
 
 		for (i = 0; i <= width_ - 1 - n_; i += n_ + 1) { // Loop over (n+1)x(n+1)
@@ -298,7 +298,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			}
 		}
 
-		return new FrameElements<T>(found, frame);
+		return new FrameElements<>(found, frame);
 	}	
 	
 	@Override
@@ -320,11 +320,11 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 	 *
 	 */
 	
-	@Plugin(type = DetectorFactory.class, visible = true)
+	@Plugin(type = DetectorFactory.class )
 	public static class Factory implements DetectorFactory {
 
 		private Map<String, Object> settings;
-		private FastMedianPanel configPanel = new FastMedianPanel();
+		private final FastMedianPanel configPanel = new FastMedianPanel();
 
 		@Override
 		public String getInfoText() {
@@ -352,7 +352,7 @@ public class NMSFastMedian<T extends RealType<T> & NativeType<T>> extends Single
 			int frames = (int) settings.get(FastMedianPanel.KEY_FRAMES);
 			final double threshold = ( Double ) settings.get( FastMedianPanel.KEY_THRESHOLD );
 			final int stepSize = ( Integer ) settings.get( FastMedianPanel.KEY_WINDOWSIZE );
-			return new NMSFastMedian<T>(frames, interpolating, threshold, stepSize);
+			return new NMSFastMedian<>(frames, interpolating, threshold, stepSize);
 		}
 
 		@Override

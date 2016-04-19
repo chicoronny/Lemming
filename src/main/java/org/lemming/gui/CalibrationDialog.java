@@ -37,17 +37,15 @@ import java.awt.event.ActionEvent;
  * @author Ronny Sczech
  *
  */
-public class CalibrationDialog extends JDialog {
+class CalibrationDialog extends JDialog {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 77072999967630231L;
 	public static final String KEY_CALIBRATION_FILE = "CALIBRATION_FILE";
-	private JButton btnFitBeads;
 	private JLabel lblRange;
-	private JLabel lblStepSize;
-	private JSpinner spinnerStepSize;
+	private final JSpinner spinnerStepSize;
 	private RangeSlider rangeSlider;
 	private JButton btnFitCurve;
 	private JButton btnSaveCalibration;
@@ -60,20 +58,18 @@ public class CalibrationDialog extends JDialog {
 		setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		setTitle("Fitter Calibration");
-		
-		lblStepSize = new JLabel("Step Size");
+
+		JLabel lblStepSize = new JLabel("Step Size");
 		
 		spinnerStepSize = new JSpinner();
-		spinnerStepSize.setModel(new SpinnerNumberModel(new Integer(10), null, null, new Integer(1)));
-		
-		btnFitBeads = new JButton("Fit beads");
+		spinnerStepSize.setModel(new SpinnerNumberModel(10, null, null, 1));
+
+		JButton btnFitBeads = new JButton("Fit beads");
 		btnFitBeads.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (fitbeads()){
-					lblRange.setEnabled(true);
-					rangeSlider.setEnabled(true);
-					btnFitCurve.setEnabled(true);
-				}
+			lblRange.setEnabled(true);
+			rangeSlider.setEnabled(true);
+			btnFitCurve.setEnabled(true);
 			}
 		});
 		
@@ -93,8 +89,7 @@ public class CalibrationDialog extends JDialog {
 		btnFitCurve = new JButton("Fit curve");
 		btnFitCurve.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (fitCurve())
-					btnSaveCalibration.setEnabled(true);
+				btnSaveCalibration.setEnabled(true);
 			}
 		});
 		btnFitCurve.setEnabled(false);
@@ -175,15 +170,15 @@ public class CalibrationDialog extends JDialog {
         calibImage.setRoi(calibImage.getWidth()/2 - 10, calibImage.getHeight()/2 - 10, 20, 20);	
 	}
 	
-	protected boolean fitbeads() {
+	protected void fitbeads() {
 		Roi roitemp = calibWindow.getImagePlus().getRoi();
-		Roi calibRoi = null;
+		Roi calibRoi;
 		try{																				
 			double w = roitemp.getFloatWidth();
 			double h = roitemp.getFloatHeight();
 			if (w!=h) {
 				IJ.showMessage("Needs a quadratic ROI /n(hint: press Shift).");
-				return false;
+				return;
 			}
 			calibRoi = roitemp;
 		} catch (NullPointerException e) {
@@ -201,25 +196,24 @@ public class CalibrationDialog extends JDialog {
 		this.rangeSlider.setUpperValue((int) zgrid[zgrid.length-1]);
 
 		calibWindow.close();
-		return true;
 	}
 	
-	protected boolean fitCurve() {
+	protected void fitCurve() {
 		int rangeMin = this.rangeSlider.getValue();
 		int rangeMax = this.rangeSlider.getUpperValue();
 		calibrator.fitBSplines(rangeMin, rangeMax);
-		return true;
 	}
 
 
 	public Map<String, Object> getSettings() {
 		HashMap<String, Object> setting = new HashMap<>(1);
-		if (calibFile!=null);
+		if (calibFile!=null) {
 			setting.put(KEY_CALIBRATION_FILE, calibFile);
+		}
 		return setting;
 	}
 
-	protected void saveCalibration() {
+	private void saveCalibration() {
 		JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
 		fc.setLocation(getLocation());
     	fc.setDialogTitle("Save calibration");   
