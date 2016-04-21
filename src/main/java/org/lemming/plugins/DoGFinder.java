@@ -38,16 +38,16 @@ import org.scijava.plugin.Plugin;
 
 public class DoGFinder<T extends RealType<T>> extends MultiRunModule implements Detector<T>{
 
-	public static final String NAME = "DoG Finder";
+	private static final String NAME = "DoG Finder";
 
-	public static final String KEY = "DOGFINDER";
+	private static final String KEY = "DOGFINDER";
 
-	public static final String INFO_TEXT = "<html>" + "Difference of Gaussian Finder" + "</html>";
-	private double radius;
-	private float threshold;
-	private double[] calibration;
+	private static final String INFO_TEXT = "<html>" + "Difference of Gaussian Finder" + "</html>";
+	private final double radius;
+	private final float threshold;
+	private final double[] calibration;
 
-	public DoGFinder(final double radius, final float threshold) {
+	private DoGFinder(final double radius, final float threshold) {
 		super();
 		this.radius = radius;
 		this.threshold = threshold;
@@ -156,7 +156,7 @@ public class DoGFinder<T extends RealType<T>> extends MultiRunModule implements 
 		 * @param minPeakValue
 		 *            - minimum PeakValue
 		 */
-		public MaximumCheck(final T minPeakValue) {
+		MaximumCheck(final T minPeakValue) {
 			this.minPeakValue = minPeakValue;
 		}
 
@@ -189,11 +189,11 @@ public class DoGFinder<T extends RealType<T>> extends MultiRunModule implements 
 		return inputs.size()==1 && outputs.size()>=1;
 	}
 
-	@Plugin(type = DetectorFactory.class, visible = true)
+	@Plugin(type = DetectorFactory.class)
 	public static class Factory implements DetectorFactory {
 
 		private Map<String, Object> settings;
-		private DoGFinderPanel configPanel = new DoGFinderPanel();
+		private final DoGFinderPanel configPanel = new DoGFinderPanel();
 
 		@Override
 		public String getInfoText() {

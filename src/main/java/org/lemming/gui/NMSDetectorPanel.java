@@ -23,35 +23,20 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Threshold");
 		
 		jTextFieldThreshold = new JTextField();
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
 		
 		JLabel lblStepsize = new JLabel("StepSize");
 		
 		spinnerStepSize = new JSpinner();
-		spinnerStepSize.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
-		spinnerStepSize.setModel(new SpinnerNumberModel(new Integer(10), new Integer(1), null, new Integer(1)));
+		spinnerStepSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerStepSize.setModel(new SpinnerNumberModel(10, 1, null, 1));
 		
 		JLabel labelGaussian = new JLabel("Gaussian");
 		
 		spinnerGaussian = new JSpinner();
-		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
 		spinnerGaussian.setToolTipText("Prefilter with Gaussian (0=no filtering)");
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
@@ -97,12 +82,12 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -4601480448696314069L;
-    private JTextField jTextFieldThreshold;
-	private JSpinner spinnerStepSize;
+    private final JTextField jTextFieldThreshold;
+	private final JSpinner spinnerStepSize;
 	public static final String KEY_NMS_STEPSIZE = "NMS_STEPSIZE";
 	public static final String KEY_NMS_THRESHOLD = "NMS_THRESHOLD";
     public static final String KEY_NMS_GAUSSIAN_SIZE = "NMS_GAUSSIAN_SIZE";
-	private JSpinner spinnerGaussian;
+	private final JSpinner spinnerGaussian;
 
 	@Override
 	public void setSettings(Map<String, Object> settings) {

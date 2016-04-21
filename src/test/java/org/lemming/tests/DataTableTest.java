@@ -21,10 +21,10 @@ public class DataTableTest {
 	private Map<Integer, Store> map;
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		pipe = new Manager(Executors.newCachedThreadPool());
 		
-		ReadLocalizationPrecision3D reader = new ReadLocalizationPrecision3D(new File("/home/ronny/Bilder/fitted.csv"),",");
+		ReadLocalizationPrecision3D reader = new ReadLocalizationPrecision3D(new File(System.getProperty("user.home")+"/ownCloud/Tubulin1.csv"),",");
 		pipe.add(reader);
 		
 		DataTable workspace = new DataTable();

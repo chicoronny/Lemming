@@ -52,9 +52,7 @@ public abstract class SingleRunModule extends AbstractModule {
 				newOutput(data);
 			}
 			afterRun();
-			return;
 		}
-		return;
 	}
 
 	protected void afterRun() {

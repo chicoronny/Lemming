@@ -16,9 +16,9 @@ import org.lemming.interfaces.Element;
  */
 public abstract class MultiRunModule extends AbstractModule{
 	
-	protected ConcurrentLinkedQueue<Integer> counterList = new ConcurrentLinkedQueue<>();
+	protected final ConcurrentLinkedQueue<Integer> counterList = new ConcurrentLinkedQueue<>();
 	
-	public MultiRunModule(){
+	protected MultiRunModule(){
 	}
 	
 	@Override
@@ -34,23 +34,18 @@ public abstract class MultiRunModule extends AbstractModule{
 
 			for (int taskNum = 0; taskNum < numThreads; ++taskNum) {
 
-				final Callable<Void> r = new Callable<Void>() {
-
-					@Override
-					public Void call() {
-						while (running) {
-							if (Thread.currentThread().isInterrupted())
-								break;
-							Element data = nextInput();
-							if (data != null)
-								newOutput(processData(data));
-							else
-								pause(10);
-						}
-						return null;
-					}
-
-				};
+				final Callable<Void> r = () -> {
+                    while (running) {
+                        if (Thread.currentThread().isInterrupted())
+                            break;
+                        Element data = nextInput();
+                        if (data != null)
+                            newOutput(processData(data));
+                        else
+                            pause(10);
+                    }
+                    return null;
+                };
 				futures.add(service.submit(r));
 			}
 
@@ -76,22 +71,17 @@ public abstract class MultiRunModule extends AbstractModule{
 
 			for (int taskNum = 0; taskNum < numThreads; ++taskNum) {
 
-				final Callable<Void> r = new Callable<Void>() {
-
-					@Override
-					public Void call() {
-						while (running) {
-							if (Thread.currentThread().isInterrupted())
-								break;
-							Element data = nextInput();
-							if (data != null) 
-								processData(data);
-							else pause(10);
-						}
-						return null;
-					}
-
-				};
+				final Callable<Void> r = () -> {
+                    while (running) {
+                        if (Thread.currentThread().isInterrupted())
+                            break;
+                        Element data = nextInput();
+                        if (data != null)
+                            processData(data);
+                        else pause(10);
+                    }
+                    return null;
+                };
 				futures.add(service.submit(r));
 			}
 
@@ -112,9 +102,7 @@ public abstract class MultiRunModule extends AbstractModule{
 				newOutput(data);
 			}
 			afterRun();
-			return;
 		}
-		return;
 	}
 
 	protected void afterRun() {		

@@ -9,11 +9,11 @@ import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optim
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.ConvergenceChecker;
 import org.apache.commons.math3.optim.PointVectorValuePair;
-import org.lemming.tools.LemmingUtils;
 
 import net.imglib2.Cursor;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.IntervalView;
+import org.lemming.tools.LemmingUtils;
 
 /**
  * a fast symmetric 2D Gaussian fitter
@@ -26,19 +26,21 @@ public class Symmetric2DFitter<T extends RealType<T>> {
 	private static final int INDEX_X0 = 0;
 	private static final int INDEX_Y0 = 1;
 	private static final int INDEX_S = 2;
+	private static final int INDEX_SX = 2;
+	private static final int INDEX_SY = 3;
 	private static final int INDEX_I0 = 3;
 	private static final int INDEX_Bg = 4;
-	private static final int PARAM_LENGTH = 5;
 	
-	private int maxIter;
-	private int maxEval;
+	private final int maxIter;
+	private final int maxEval;
 	private int[] xgrid;
 	private int[] ygrid;
 	private double[] Ival;
-	private IntervalView<T> interval;
-	private T bg;
-	private T max;
-	
+	private final IntervalView<T> interval;
+	private static final int PARAM_LENGTH = 5;
+	private final T bg;
+	private final T max;
+
 	public Symmetric2DFitter(final IntervalView<T> interval_, int maxIter_, int maxEval_) {
 		interval = interval_;
 		maxIter = maxIter_;
@@ -61,30 +63,30 @@ public class Symmetric2DFitter<T extends RealType<T>> {
 			Ival[index++]=cursor.get().getRealDouble();
 		}
 	}
-	
+
 	private double[] getInitialGuess(IntervalView<T> interval) {
 		double[] initialGuess = new double[PARAM_LENGTH];
-   
-	    final CentroidFitterRA<T> cf = new CentroidFitterRA<T>(interval, 0);
-	    final double[] centroid = cf.fit();
+
+		CentroidFitterRA<T> cf = new CentroidFitterRA<>(interval, 0);
+		double[] centroid = cf.fit();
 
 		initialGuess[INDEX_X0] = centroid[INDEX_X0];
-		initialGuess[INDEX_Y0] = centroid[INDEX_Y0];    
-	    initialGuess[INDEX_S] = centroid[INDEX_S];
-	    initialGuess[INDEX_I0] = max.getRealDouble();
-	    initialGuess[INDEX_Bg] = bg.getRealDouble();
-		
+		initialGuess[INDEX_Y0] = centroid[INDEX_Y0];
+		initialGuess[INDEX_S]  = 0.5d*(centroid[INDEX_SY] + centroid[INDEX_SX]);
+		initialGuess[INDEX_I0] = max.getRealDouble();
+		initialGuess[INDEX_Bg] = bg.getRealDouble();
+
 		return initialGuess;
 	}
 	
 	public double[] fit() {
 		createGrids();
-		final SymmetricGaussian eg = new SymmetricGaussian(xgrid, ygrid);
+		SymmetricGaussian eg = new SymmetricGaussian(xgrid, ygrid);
 		final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer();
 		final LeastSquaresBuilder builder = new LeastSquaresBuilder();
-   	 	builder.model(eg.getModelFunction(), eg.getModelFunctionJacobian());
+		builder.model(eg.getModelFunction(), eg.getModelFunctionJacobian());
 		double[] fittedEG;
-		int iter = 0;
+		int iter;
 		try {
 			final Optimum optimum = optimizer.optimize(
 	                builder
@@ -103,10 +105,10 @@ public class Symmetric2DFitter<T extends RealType<T>> {
 		} catch(ConvergenceException e){
         	return null;
 		}
-		
+
 		double[] result = new double[7];
-		result[0] = fittedEG[0];
-		result[1] = fittedEG[1];
+		result[0] = fittedEG[0]+0.5;
+		result[1] = fittedEG[1]+0.5;
 		result[2] = fittedEG[2];
 		result[3] = fittedEG[3];
 		result[4] = fittedEG[4];
@@ -138,7 +140,11 @@ public class Symmetric2DFitter<T extends RealType<T>> {
 		public boolean converged(int i, PointVectorValuePair previous, PointVectorValuePair current) {
 			if (i == iteration_)
 	           return lastResult_;
-		
+
+			if (i >100){
+				 return true;
+			}
+			
 			iteration_ = i;
 	          double[] p = previous.getPoint();
 	          double[] c = current.getPoint();

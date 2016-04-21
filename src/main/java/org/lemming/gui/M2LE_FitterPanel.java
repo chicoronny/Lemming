@@ -16,10 +16,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.awt.event.ActionEvent;
-
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
@@ -43,39 +40,28 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
 		spinnerWindowSize.setModel(new SpinnerNumberModel(5, null, null, 1));
 		
 		lblCalibration = new JLabel("File");
 		lblCalibration.setAlignmentX(0.5f);
 
 		JButton btnCalibration = new JButton("Calib. File");
-		btnCalibration.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
-		    	fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		    	fc.setDialogTitle("Import Calibration File");
-		    	int returnVal = fc.showOpenDialog(null);
-		    	 
-		        if (returnVal != JFileChooser.APPROVE_OPTION)
-		        	return;
-		        calibFile = fc.getSelectedFile();
-		        lblCalibration.setText(calibFile.getName());
-		        fireChanged();
-			}
-		});
+		btnCalibration.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setDialogTitle("Import Calibration File");
+            int returnVal = fc.showOpenDialog(null);
+
+            if (returnVal != JFileChooser.APPROVE_OPTION)
+                return;
+            calibFile = fc.getSelectedFile();
+            lblCalibration.setText(calibFile.getName());
+            fireChanged();
+        });
 
 		JButton btnNewCalibration = new JButton("New Calibration");
-		btnNewCalibration.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				calibrate();
-			}
-		});
+		btnNewCalibration.addActionListener(arg0 -> calibrate());
 
 		JLabel lblUsablePixel = new JLabel("usable pixel");
 		lblUsablePixel.setToolTipText("fraction of usable pixel");
@@ -83,11 +69,7 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		textFieldUsablePixel = new JTextField();
 		textFieldUsablePixel.setHorizontalAlignment(SwingConstants.TRAILING);
 		textFieldUsablePixel.setText("1.0");
-		textFieldUsablePixel.addKeyListener(new WaitForKeyListener(1000, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}}));
+		textFieldUsablePixel.addKeyListener(new WaitForKeyListener(1000, () -> fireChanged()));
 		textFieldUsablePixel.setColumns(10);
 		
 		GroupLayout groupLayout = new GroupLayout(this);

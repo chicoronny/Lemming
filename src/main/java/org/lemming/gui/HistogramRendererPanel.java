@@ -41,22 +41,12 @@ public class HistogramRendererPanel extends ConfigurationPanel {
 		textXBins = new JTextField();
 		textXBins.setHorizontalAlignment(SwingConstants.TRAILING);
 		textXBins.setText("500");
-		textXBins.addKeyListener(new WaitForKeyListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		textXBins.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
 		
 		textYBins = new JTextField();
 		textYBins.setHorizontalAlignment(SwingConstants.TRAILING);
 		textYBins.setText("500");
-		textYBins.addKeyListener(new WaitForKeyListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		textYBins.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
 		
 		labelX2 = new JLabel("100");
 		

@@ -13,7 +13,7 @@ import net.imglib2.type.numeric.RealType;
  */
 public interface PreProcessor<T extends RealType<T>> extends Detector<T>{
 	
-	public Frame<T> preProcess(final Queue<Frame<T>> list, final boolean isLast);
+	Frame<T> preProcess(final Queue<Frame<T>> list, final boolean isLast);
 	
-	public int getNumberOfFrames();
+	int getNumberOfFrames();
 }

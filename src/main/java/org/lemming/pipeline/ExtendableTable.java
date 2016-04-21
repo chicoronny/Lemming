@@ -23,9 +23,9 @@ import javolution.util.function.Predicate;
  */
 public class ExtendableTable {
 	
-	private Map<String, List<Number>> table;
-	public Map<String, Predicate<Number>> filtersCollection;
-	private Map<String, String> names;
+	private final Map<String, List<Number>> table;
+	public final Map<String, Predicate<Number>> filtersCollection;
+	private final Map<String, String> names;
 	
 	/**
 	 * 
@@ -55,7 +55,7 @@ public class ExtendableTable {
 	 * @param member - member
 	 */
 	public void addNewMember(String member) {
-		table.put(member,new FastTable<Number>());
+		table.put(member, new FastTable<>());
 		names.put(member,member);
 	}
 	
@@ -72,7 +72,7 @@ public class ExtendableTable {
 		return table.keySet();
 	}
 	
-	public Map<String, List<Number>> getTable(){
+	private Map<String, List<Number>> getTable(){
 		return table;
 	}
 	
@@ -81,19 +81,15 @@ public class ExtendableTable {
 		if (filtersCollection.isEmpty()) return this;
 		
 		final ExtendableTable filteredTable = new ExtendableTable(); //new instance
-		for (String col: this.columnNames())
-			filteredTable.addNewMember(col);
+		this.columnNames().forEach(filteredTable::addNewMember);
 		
 		Map<String, Number> row;
 		for (int index = 0 ; index < getNumberOfRows(); index++){
 			row = getRow(index);
 			boolean filtered = true;
-			for (String key : filtersCollection.keySet()){
+			for (String key : filtersCollection.keySet()) {
 				Number value = row.get(key);
-				if (value!=null)
-					filtered = filtered && (filtered == filtersCollection.get(key).test(value));
-				else
-					filtered = false;
+				filtered = value != null && filtered && (filtered == filtersCollection.get(key).test(value));
 			}
 			if(filtered)
 				filteredTable.addRow(row);
@@ -102,26 +98,12 @@ public class ExtendableTable {
 	}
 	
 	public void addFilterMinMax(final String col, final double min, final double max){
-		Predicate<Number> p = new Predicate<Number>(){
-
-			@Override
-			public boolean test(Number t) {				
-				return (t.doubleValue()>=min) && (t.doubleValue()<=max);
-			}
-			
-		};
+		Predicate<Number> p = t -> (t.doubleValue()>=min) && (t.doubleValue()<=max);
 		filtersCollection.put(col, p);
 	}
 	
 	public void addFilterExact(final String col, final Number o){
-		Predicate<Number> p = new Predicate<Number>(){
-
-			@Override
-			public boolean test(Number t) {	
-				return t.equals(o);
-			}
-			
-		};
+		Predicate<Number> p = t -> t.equals(o);
 		filtersCollection.put(col, p);
 	}
 	
@@ -159,6 +141,7 @@ public class ExtendableTable {
 	
 	/**
 	 * @param col - colummn
+	 * @param row - row
 	 * @return column
 	 */
 	public Object getData(String col, int row){
@@ -174,7 +157,7 @@ public class ExtendableTable {
 	 * @param member - member 
 	 * @param o - object
 	 */
-	public void add(String member, Number o){
+	private void add(String member, Number o){
 		List<Number> t = table.get(member);
 		if (t!=null){
 			t.add(o);
@@ -234,7 +217,7 @@ public class ExtendableTable {
 
 			@Override
 			public synchronized Element poll() {
-				ElementMap em = null;
+				ElementMap em;
 				if (!isEmpty())	
 					em = new ElementMap(getRow(lastRow++).entrySet());
 				else{

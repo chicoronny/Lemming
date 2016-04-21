@@ -30,7 +30,7 @@ public class GaussianFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 	private static final String KEY = "GAUSSIANFITTER";
 	private static final String INFO_TEXT = "<html>" + "Gaussian Fitter Plugin (with sx and sy)" + "</html>";
 
-	private Map<String, Object> params;
+	private final Map<String, Object> params;
 
 	public GaussianFitter(int windowSize, final Map<String,Object> params) {
 		super(windowSize);

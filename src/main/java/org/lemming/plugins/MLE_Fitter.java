@@ -6,7 +6,6 @@ import static jcuda.runtime.JCuda.cudaMemcpy;
 import static jcuda.runtime.cudaMemcpyKind.cudaMemcpyDeviceToHost;
 import static jcuda.runtime.cudaMemcpyKind.cudaMemcpyHostToDevice;
 
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -27,6 +26,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import org.lemming.factories.FitterFactory;
@@ -82,7 +82,9 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 			long yend = ystart + kernelSize - 1;
 			
 			final Interval roi = new FinalInterval(new long[] { xstart, ystart }, new long[] { xend, yend });
-			Cursor<T> c = Views.offsetInterval(source, roi).cursor();
+			IntervalView<T> interval = Views.interval(source, roi); 
+			
+			Cursor<T> c = interval.cursor();
 			float[] IVal = new float[kernelSize * kernelSize];
 			int index=0;
 			while (c.hasNext()){
@@ -105,24 +107,25 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		final GPUBlockThread t = new GPUBlockThread(device, kernelList, kernelSize, kernelList.size(), PARAMETER_LENGTH, "kernel_MLEFit_sigmaxy");
 		//MLE t = new MLE(kernelList, kernelSize, kernelList.size());
 		final FutureTask<Map<String, float[]>> f = new FutureTask<>(t);
-		try {
+			try {
 			f.run();
 			Map<String, float[]> res = f.get();
-			final float[] par = res.get("Parameters");
-			final float[] fits = res.get("CRLBs");
-			final int ksize = kernelList.size();
+			float[] par = res.get("Parameters");
+			float[] fits = res.get("CRLBs");
+			int ksize = kernelList.size();
 			for (int i=0;i<ksize;i++){
-				Kernel k = kernelList.get(i);
-				long xstart = k.getRoi().min(0);
-				long ystart = k.getRoi().min(1);
-				float x = par[i]+xstart;
-				float y = par[ksize+i]+ystart;
+				long xstart = kernelList.get(i).getRoi().min(0);
+				long ystart = kernelList.get(i).getRoi().min(1);
+				float x = par[i] + xstart + 0.5f;
+				float y = par[ksize+i] + ystart + 0.5f;
 				float intensity = par[2*ksize+i];
 				float fitI = fits[2*ksize+i];
 				float bg = par[3*ksize+i];
 				float sx = par[4*ksize+i];
 				float sy = par[5*ksize+i];
-				newOutput(new LocalizationPrecision3D(k.getID(), x*pixelDepth, y*pixelDepth, fitI, sx*pixelDepth, sy*pixelDepth, bg, intensity, k.getFrame()));
+				long frame = kernelList.get(i).getFrame();
+				long id = kernelList.get(i).getID();
+				newOutput(new LocalizationPrecision3D(id, x*pixelDepth, y*pixelDepth, fitI, sx*pixelDepth, sy*pixelDepth, bg, intensity, frame));
 			}
 		} catch (InterruptedException | ExecutionException | ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
@@ -215,8 +218,8 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		private final String functionName;
 		private int count = 0;
 		
-		private static final float PSFSigma = 1.0f;
-		private static final int iterations = 100;
+		private static final float PSFSigma = 1.3f;
+		private static final int iterations = 200;
 		private static final String ptxFileName = "resources/CudaFit.ptx";
 		private static final float sharedMemPerBlock = 262144;
 
@@ -375,7 +378,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 		@Override
 		public boolean hasGPU() {
-			System.load(System.getProperty("user.dir")+"/lib/libJCudaDriver-linux-x86_64.so");
+			System.load(System.getProperty("user.dir")+"/jars/libJCudaDriver-linux-x86_64.so");
 			int res = JCudaDriver.cuInit(0);
 			if (res != CUresult.CUDA_SUCCESS) return false;
 			JCudaDriver.setExceptionsEnabled(true);

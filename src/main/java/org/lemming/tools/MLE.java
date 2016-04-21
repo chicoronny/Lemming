@@ -13,17 +13,17 @@ import org.lemming.pipeline.Kernel;
 
 import javolution.util.FastTable;
 
-public class MLE implements Callable<Map<String,float[]>>{
+class MLE implements Callable<Map<String,float[]>>{
 	
 	private static final double sq2pi = FastMath.sqrt(2*FastMath.PI);
 	private static final int NV_P=4;			//!< number of fitting parameters for MLEfit (x,y,bg,I)
 	private static final int NV_P2=6;			//!< number of fitting parameters for MLEFit_sigmaxy (x,y,bg,I,Sx,Sy)
-	private List<Kernel> kList;
-	private int nKernels;
-	private int sz;
+	private final List<Kernel> kList;
+	private final int nKernels;
+	private final int sz;
 	private static final double PSFSigma = 1.3f;
 	private static final int iterations = 200;
-	private static double sharedMemPerBlock = 262144;
+	private static final double sharedMemPerBlock = 262144;
 	
 	public MLE(List<Kernel> kernelList, int sz, int nKernels){
 		this.sz = sz;
@@ -81,7 +81,7 @@ public class MLE implements Callable<Map<String,float[]>>{
 	//*******************************************************************************************
 	// Private Calls
 	//*******************************************************************************************
-	 void kernel_MatInvN(double[] M, double[] Minv, double[] DiagMinv, int sz) {
+	private void kernel_MatInvN(double[] M, double[] Minv, double[] DiagMinv, int sz) {
 
 		int ii, jj, kk, num, b;
 		double tmp1 = 0;
@@ -146,11 +146,10 @@ public class MLE implements Callable<Map<String,float[]>>{
 			for (ii = 0; ii < sz; ii++)
 				DiagMinv[ii] = Minv[ii * sz + ii];
 
-		return;
 	}
 
 	//*******************************************************************************************
-	 double kernel_IntGauss1D(final int ii, final double theta, final double sigma) {
+	private double kernel_IntGauss1D(final int ii, final double theta, final double sigma) {
 		final double norm = 0.5f / sigma / sigma;
 		return 0.5f
 			* (Erf.erf((ii - theta + 0.5f) * FastMath.sqrt(norm))
@@ -176,9 +175,9 @@ public class MLE implements Callable<Map<String,float[]>>{
 	}
 
 	//*******************************************************************************************
-	 void kernel_DerivativeIntGauss1D(final int ii, final double theta,
-		final double sigma, final double theta2, final double PSFy, MutableDouble dudt,
-		MutableDouble d2udt2) {
+	private void kernel_DerivativeIntGauss1D(final int ii, final double theta,
+											 final double sigma, final double theta2, final double PSFy, MutableDouble dudt,
+											 MutableDouble d2udt2) {
 
 		double a, b;
 		a = FastMath.exp(-0.5f * ((ii + 0.5f - theta) / sigma)*((ii + 0.5f - theta) / sigma));
@@ -192,9 +191,9 @@ public class MLE implements Callable<Map<String,float[]>>{
 	}
 
 	//*******************************************************************************************
-	 void kernel_DerivativeIntGauss1DSigma(final int ii, final double x,
-		final double Sx, final double N, final double PSFy, MutableDouble dudt,
-		MutableDouble d2udt2, double dudt0) {
+	private void kernel_DerivativeIntGauss1DSigma(final int ii, final double x,
+												  final double Sx, final double N, final double PSFy, MutableDouble dudt,
+												  MutableDouble d2udt2, double dudt0) {
 
 		double ax, bx;
 
@@ -226,7 +225,7 @@ public class MLE implements Callable<Map<String,float[]>>{
 	}
 
 	//*******************************************************************************************
-	 void kernel_CenterofMass2D(final int sz, final float[] d_data, int index, MutableDouble x, MutableDouble y) {
+	private void kernel_CenterofMass2D(final int sz, final float[] d_data, int index, MutableDouble x, MutableDouble y) {
 		double tmpx = 0.0f;
 		double tmpy = 0.0f;
 		double tmpsum = 0.0f;
@@ -242,11 +241,11 @@ public class MLE implements Callable<Map<String,float[]>>{
 	}
 
 	// *******************************************************************************************
-	void kernel_GaussFMaxMin2D(final int sz, final double sigma, float[] data, int index, MutableDouble MaxN, MutableDouble MinBG) {
+	private void kernel_GaussFMaxMin2D(final int sz, final double sigma, float[] data, int index, MutableDouble MaxN, MutableDouble MinBG) {
 
 		int ii, jj, kk, ll;
-		double filteredpixel = 0, sum = 0;
-		double temp = 0;
+		double filteredpixel, sum;
+		double temp;
 		MaxN.setValue(0);
 		MinBG.setValue(10e10); // big
 
@@ -270,8 +269,8 @@ public class MLE implements Callable<Map<String,float[]>>{
 	}
 
 	//***************************************************************************************************************************
-	 void kernel_CentroidFitter(final int sz, final float[]data, final int index, MutableDouble sx, MutableDouble sy,
-			 MutableDouble sx_std, MutableDouble sy_std){
+	private void kernel_CentroidFitter(final int sz, final float[] data, final int index, MutableDouble sx, MutableDouble sy,
+									   MutableDouble sx_std, MutableDouble sy_std){
 
 		double tmpsx = 0.0f; double tmpsx_std = 0.0f;
 		double tmpsy = 0.0f; double tmpsy_std = 0.0f;
@@ -343,9 +342,6 @@ public class MLE implements Callable<Map<String,float[]>>{
 		double[] M = new double[NV_P*NV_P]; 
 		double[] Diag = new double[NV_P]; 
 		double[] Minv= new double[NV_P*NV_P];
-		int tx = threadIdx;
-		int bx = blockIdx;
-		int BlockSize = blockDim;
 		int ii, jj, kk, ll;
 		double model, cf, df, data;
 		double Div;
@@ -361,12 +357,12 @@ public class MLE implements Callable<Map<String,float[]>>{
 		MutableDouble Nmax = new MutableDouble();
 
 		//Prevent read/write past end of array
-		if ((bx*BlockSize + tx) >= Nfits) return;
+		if ((blockIdx * blockDim + threadIdx) >= Nfits) return;
 
 		Arrays.fill(M, 0);
 		Arrays.fill(Minv, 0);
 		//load data
-		int index = sz*sz*bx*BlockSize + sz*sz*tx;
+		int index = sz*sz* blockIdx * blockDim + sz*sz* threadIdx;
 		//initial values
 		
 		kernel_CenterofMass2D(sz, d_data, index, theta[0], theta[1]);
@@ -460,24 +456,20 @@ public class MLE implements Callable<Map<String,float[]>>{
 
 		//write to global arrays
 		for (kk = 0; kk<NV; kk++)
-			d_Parameters[Nfits*kk + BlockSize*bx + tx] = theta[kk].getValue();
+			d_Parameters[Nfits*kk + blockDim * blockIdx + threadIdx] = theta[kk].getValue();
 		for (kk = 0; kk<NV; kk++)
-			d_CRLBs[Nfits*kk + BlockSize*bx + tx] = Diag[kk];
-		d_LogLikelihood[BlockSize*bx + tx] = Div;
+			d_CRLBs[Nfits*kk + blockDim * blockIdx + threadIdx] = Diag[kk];
+		d_LogLikelihood[blockDim * blockIdx + threadIdx] = Div;
 
-		return;
 	}
 	
-	void kernel_MLEFit_sigmaxy(float[] d_data, double PSFSigma, int sz, int iterations,
-			FastTable<Double> d_Parameters, FastTable<Double> d_CRLBs, FastTable<Double> d_LogLikelihood, int Nfits, int threadIdx, int blockIdx, int blockDim){
+	private void kernel_MLEFit_sigmaxy(float[] d_data, double PSFSigma, int sz, int iterations,
+									   FastTable<Double> d_Parameters, FastTable<Double> d_CRLBs, FastTable<Double> d_LogLikelihood, int Nfits, int threadIdx, int blockIdx, int blockDim){
 
 		final int NV = NV_P2;
 		double[] M = new double[NV*NV]; 
 		//double[] Diag = new double[NV]; 
 		double[] Minv= new double[NV*NV];
-		int tx = threadIdx;
-		int bx = blockIdx;
-		int BlockSize = blockDim;
 		int ii, jj, kk, ll;
 		double model, cf, df, data;
 		//double Div;
@@ -500,12 +492,12 @@ public class MLE implements Callable<Map<String,float[]>>{
 		double sums[]=new double[NV];
 
 		//Prevent read/write past end of array
-		if ((bx*BlockSize + tx) >= Nfits) return;
+		if ((blockIdx * blockDim + threadIdx) >= Nfits) return;
 
 		Arrays.fill(M, 0);
 		Arrays.fill(Minv, 0);
 		//load data
-		int index = (sz*sz*bx*BlockSize + sz*sz*tx);
+		int index = (sz*sz* blockIdx * blockDim + sz*sz* threadIdx);
 
 		//initial values
 		kernel_CenterofMass2D(sz, d_data, index, theta[0], theta[1]);
@@ -612,13 +604,12 @@ public class MLE implements Callable<Map<String,float[]>>{
 		 */
 		//write to global arrays
 		for (kk = 0; kk<NV; kk++)
-			d_Parameters.set(Nfits*kk + BlockSize*bx + tx, theta[kk].getValue());
+			d_Parameters.set(Nfits*kk + blockDim * blockIdx + threadIdx, theta[kk].getValue());
 		//for (kk = 0; kk<NV; kk++)
 		//	d_CRLBs.set(Nfits*kk + BlockSize*bx + tx, Diag[kk]);
 		//d_LogLikelihood.set(BlockSize*bx + tx, Div);
 		for (kk = 0; kk<NV; kk++)
-			d_CRLBs.set(Nfits*kk + BlockSize*bx + tx, sums[kk]);
-		return;
+			d_CRLBs.set(Nfits*kk + blockDim * blockIdx + threadIdx, sums[kk]);
 	}
 	
 	void kernel_MLEFit_z(
@@ -630,9 +621,6 @@ public class MLE implements Callable<Map<String,float[]>>{
 		double[] M = new double[NV * NV];
 		// double[] Diag = new double[NV];
 		double[] Minv = new double[NV * NV];
-		int tx = threadIdx;
-		int bx = blockIdx;
-		int BlockSize = blockDim;
 		int ii, jj, kk, ll;
 		double model, cf, df, data;
 		// double Div;
@@ -657,12 +645,12 @@ public class MLE implements Callable<Map<String,float[]>>{
 		MutableDouble sigmax_sqrd = new MutableDouble();
 
 		// Prevent read/write past end of array
-		if ((bx * BlockSize + tx) >= Nfits) return;
+		if ((blockIdx * blockDim + threadIdx) >= Nfits) return;
 
 		Arrays.fill(M, 0);
 		Arrays.fill(Minv, 0);
 		// load data
-		int index = (sz * sz * bx * BlockSize + sz * sz * tx);
+		int index = (sz * sz * blockIdx * blockDim + sz * sz * threadIdx);
 
 		// initial values
 		//kernel_CenterofMass2D(sz, d_data, index, theta[0], theta[1]);
@@ -727,13 +715,12 @@ public class MLE implements Callable<Map<String,float[]>>{
 		}
 		// write to global arrays
 		for (kk = 0; kk < NV; kk++)
-			d_Parameters.set(Nfits * kk + BlockSize * bx + tx, theta[kk].getValue());
+			d_Parameters.set(Nfits * kk + blockDim * blockIdx + threadIdx, theta[kk].getValue());
 		// for (kk = 0; kk<NV; kk++)
 		// d_CRLBs.set(Nfits*kk + BlockSize*bx + tx, Diag[kk]);
 		// d_LogLikelihood.set(BlockSize*bx + tx, Div);
 		for (kk = 0; kk < NV; kk++)
-			d_CRLBs.set(Nfits * kk + BlockSize * bx + tx, sums[kk]);
-		return;
+			d_CRLBs.set(Nfits * kk + blockDim * blockIdx + threadIdx, sums[kk]);
 	}
 
 }

@@ -25,9 +25,6 @@ import javax.swing.plaf.basic.BasicSliderUI;
  */
 class RangeSlider extends JSlider {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3826054916840844269L;
 
 	/**
@@ -64,14 +61,14 @@ class RangeSlider extends JSlider {
 	/**
 	 * Returns the upper value in the range.
 	 */
-	public int getUpperValue() {
+	int getUpperValue() {
 		return getValue() + getExtent();
 	}
 
 	/**
 	 * Sets the upper value in the range.
 	 */
-	public void setUpperValue(int value) {
+	void setUpperValue(int value) {
 		// Compute new extent.
 		int lowerValue = getValue();
 		int newExtent = Math.min(Math.max(0, value - lowerValue), getMaximum() - lowerValue);
@@ -90,7 +87,7 @@ class RangeSlider extends JSlider {
 	 * UI delegate for the RangeSlider component. RangeSliderUI paints two
 	 * thumbs, one for the lower value and one for the upper value.
 	 */
-	class RangeSliderUI extends BasicSliderUI {
+	private class RangeSliderUI extends BasicSliderUI {
 
 		/** Color of selected range. */
 		private final Color rangeColor = Color.GREEN;
@@ -112,7 +109,7 @@ class RangeSlider extends JSlider {
 		 *            RangeSlider
 		 */
 
-		public RangeSliderUI(JSlider b) {
+		RangeSliderUI(JSlider b) {
 			super(b);
 		}
 
@@ -451,7 +448,7 @@ class RangeSlider extends JSlider {
 		/**
 		 * Listener to handle mouse movements in the slider track.
 		 */
-		public class RangeTrackListener extends TrackListener {
+		private class RangeTrackListener extends TrackListener {
 
 			@Override
 			public void mousePressed(MouseEvent e) {

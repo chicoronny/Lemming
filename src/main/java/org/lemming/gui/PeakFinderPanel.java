@@ -21,9 +21,9 @@ public class PeakFinderPanel extends ConfigurationPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 7807972034055388559L;
-	private JTextField jTextFieldThreshold;
-	private JSpinner spinnerKernelSize;
-	private JSpinner spinnerGaussian;
+	private final JTextField jTextFieldThreshold;
+	private final JSpinner spinnerKernelSize;
+	private final JSpinner spinnerGaussian;
 	public static final String KEY_KERNEL_SIZE = "KERNEL_SIZE";
 	public static final String KEY_THRESHOLD = "PEAK_THRESHOLD";
 	public static final String KEY_GAUSSIAN_SIZE = "GAUSSIAN_SIZE";
@@ -37,35 +37,19 @@ public class PeakFinderPanel extends ConfigurationPanel {
 		jTextFieldThreshold.setToolTipText("Threshold");
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable(){
-
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
 		
 		JLabel lblKernelSize = new JLabel("KernelSize");
 		
 		spinnerKernelSize = new JSpinner();
 		spinnerKernelSize.setToolTipText("Kernel Size");
-		spinnerKernelSize.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
-		spinnerKernelSize.setModel(new SpinnerNumberModel(new Integer(10), new Integer(1), null, new Integer(1)));
+		spinnerKernelSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerKernelSize.setModel(new SpinnerNumberModel(10, 1, null, 1));
 		
 		JLabel lblGaussian = new JLabel("Gaussian");
 		
 		spinnerGaussian = new JSpinner();
-		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
 		spinnerGaussian.setToolTipText("Prefilter with Gaussian (0=no filtering)");
 		spinnerGaussian.setModel(new SpinnerNumberModel(0, 0, 20, 1));
 		GroupLayout groupLayout = new GroupLayout(this);

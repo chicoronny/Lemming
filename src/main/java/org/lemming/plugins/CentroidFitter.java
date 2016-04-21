@@ -25,13 +25,13 @@ import org.scijava.plugin.Plugin;
 
 public class CentroidFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 
-	public static final String NAME = "Centroid Fitter";
+	private static final String NAME = "Centroid Fitter";
 
-	public static final String KEY = "CENTROIDFITTER";
+	private static final String KEY = "CENTROIDFITTER";
 
-	public static final String INFO_TEXT = "<html>" + "Centroid Fitter Plugin" + "</html>";
+	private static final String INFO_TEXT = "<html>" + "Centroid Fitter Plugin" + "</html>";
 
-	private double thresh;
+	private final double thresh;
 
 	public CentroidFitter(int halfkernel, double threshold_) {
 		super(halfkernel);
@@ -68,11 +68,11 @@ public class CentroidFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 		return found;
 	}
 
-	@Plugin(type = FitterFactory.class, visible = true)
+	@Plugin(type = FitterFactory.class)
 	public static class Factory implements FitterFactory {
 
 		private Map<String, Object> settings;
-		private FitterPanel configPanel = new FitterPanel();
+		private final FitterPanel configPanel = new FitterPanel();
 
 		@Override
 		public String getInfoText() {

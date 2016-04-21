@@ -22,8 +22,8 @@ public class DoGFinderPanel extends ConfigurationPanel {
 	private static final long serialVersionUID = -273740217694586888L;
 	public static final String KEY_THRESHOLD = "DOG_THRESHOLD";
 	public static final String KEY_RADIUS = "RADIUS";
-	private JTextField jTextFieldThreshold;
-	private JSpinner spinnerRadius;
+	private final JTextField jTextFieldThreshold;
+	private final JSpinner spinnerRadius;
 
 	public DoGFinderPanel() {
 		setBorder(null);
@@ -33,24 +33,13 @@ public class DoGFinderPanel extends ConfigurationPanel {
 		jTextFieldThreshold = new JTextField();
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable(){
-
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
 		
 		JLabel lblRadius = new JLabel("Radius");
 		
 		spinnerRadius = new JSpinner();
-		spinnerRadius.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
-		spinnerRadius.setModel(new SpinnerNumberModel(new Integer(7), new Integer(1), null, new Integer(1)));
+		spinnerRadius.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerRadius.setModel(new SpinnerNumberModel(7, 1, null, 1));
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)

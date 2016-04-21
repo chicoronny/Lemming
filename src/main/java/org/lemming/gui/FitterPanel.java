@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
-import org.lemming.math.Calibrator;
 import org.lemming.tools.WaitForChangeListener;
 import org.lemming.tools.WaitForKeyListener;
 
@@ -17,10 +16,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.awt.event.ActionEvent;
-
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
@@ -33,18 +29,10 @@ public class FitterPanel extends ConfigurationPanel {
 	public static final String KEY_WINDOW_SIZE = "WINDOW_SIZE";
 	public static final String KEY_CENTROID_THRESHOLD = "CENTROID_THRESHOLD";
 	public static final String KEY_CALIBRATION_FILENAME = "CALIBRATION_FILENAME";
-	public static final String KEY_STEPSIZE = "STEPSIZE";
-	private JSpinner spinnerWindowSize;
-	private JButton btnCalibration;
-	private JLabel lblCalibration;
-	protected File calibFile;
-	protected File camFile;
-	protected boolean doubleClicked = false;
-	protected int default_step = 10;
-	protected Calibrator calibrator;
-	private JButton btnNewCalibration;
-	private JLabel lblThreshold;
-	private JTextField textFieldThreshold;
+	private final JSpinner spinnerWindowSize;
+	private final JLabel lblCalibration;
+	private File calibFile;
+		private final JTextField textFieldThreshold;
 
 	public FitterPanel() {
 		setBorder(null);
@@ -52,50 +40,35 @@ public class FitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}
-		}));
-		spinnerWindowSize.setModel(new SpinnerNumberModel(new Integer(5), null, null, new Integer(1)));
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerWindowSize.setModel(new SpinnerNumberModel(5, null, null, 1));
 		
 		lblCalibration = new JLabel("File");
 		lblCalibration.setAlignmentX(0.5f);
-		
-		btnCalibration = new JButton("Calib. File");
-		btnCalibration.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
-		    	fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		    	fc.setDialogTitle("Import Calibration File");
-		    	int returnVal = fc.showOpenDialog(null);
-		    	 
-		        if (returnVal != JFileChooser.APPROVE_OPTION)
-		        	return;
-		        calibFile = fc.getSelectedFile();
-		        lblCalibration.setText(calibFile.getName());
-		        fireChanged();
-			}
-		});
-		
-		btnNewCalibration = new JButton("New Calibration");
-		btnNewCalibration.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				calibrate();
-			}
-		});
-		
-		lblThreshold = new JLabel("Threshold");
+
+		JButton btnCalibration = new JButton("Calib. File");
+		btnCalibration.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setDialogTitle("Import Calibration File");
+            int returnVal = fc.showOpenDialog(null);
+
+            if (returnVal != JFileChooser.APPROVE_OPTION)
+                return;
+            calibFile = fc.getSelectedFile();
+            lblCalibration.setText(calibFile.getName());
+            fireChanged();
+        });
+
+		JButton btnNewCalibration = new JButton("New Calibration");
+		btnNewCalibration.addActionListener(arg0 -> calibrate());
+
+		JLabel lblThreshold = new JLabel("Threshold");
 		
 		textFieldThreshold = new JTextField();
 		textFieldThreshold.setHorizontalAlignment(SwingConstants.TRAILING);
 		textFieldThreshold.setText("100");
-		textFieldThreshold.addKeyListener(new WaitForKeyListener(1000, new Runnable(){
-			@Override
-			public void run() {
-				fireChanged();
-			}}));
+		textFieldThreshold.addKeyListener(new WaitForKeyListener(1000, () -> fireChanged()));
 		textFieldThreshold.setColumns(10);
 		
 		GroupLayout groupLayout = new GroupLayout(this);
@@ -172,10 +145,6 @@ public class FitterPanel extends ConfigurationPanel {
 			return settings;
 		}
 		settings.put(KEY_CALIBRATION_FILENAME, calibFile.getAbsolutePath());
-		if (camFile == null){
-			//IJ.error("Please provide a Camera File!");
-			return settings;
-		}
 		return settings;
 	}
 }

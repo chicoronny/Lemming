@@ -1,13 +1,13 @@
 package org.lemming.pipeline;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import org.lemming.interfaces.ModuleInterface;
 import org.lemming.interfaces.Store;
@@ -22,14 +22,14 @@ import ij.IJ;
  *
  */
 public class Manager{
-	
+
 	public static final int STATE_DONE = 1;
 	final private Map<Integer,Store> storeMap = new LinkedHashMap<>();
 	final private Map<Integer,ModuleInterface> modules = new LinkedHashMap<>();
 	private boolean done = false;
 	private int maximum = 1;
-	private ExecutorService service;
-	private final List< PropertyChangeListener > changeListeners = new ArrayList< PropertyChangeListener >();
+	private final ExecutorService service;
+	private final List< PropertyChangeListener > changeListeners = new ArrayList<>();
 	private int progress;
 
 	public Manager(ExecutorService service) {
@@ -44,11 +44,11 @@ public class Manager{
 		for ( final PropertyChangeListener cl : changeListeners )
 			cl.propertyChange( e );
 	}
-	
-	public void add(ModuleInterface module){		
-		modules.put(module.hashCode(),module);		
+
+	public void add(ModuleInterface module){
+		modules.put(module.hashCode(),module);
 	}
-	
+
 	public void linkModules(ModuleInterface from, ModuleInterface to, boolean noInputs, int maxElements ){
 		Store s = null;
 		if (noInputs){
@@ -66,7 +66,7 @@ public class Manager{
 		well.setInput(s);
 		storeMap.put(s.hashCode(), s);
 	}
-	
+
 	public void linkModules(ModuleInterface from , ModuleInterface to ){
 		ModuleInterface source = modules.get(from.hashCode());
 		if (source==null) throw new NullPointerException("Wrong linkage!");
@@ -77,31 +77,31 @@ public class Manager{
 		well.setInput(s);
 		storeMap.put(s.hashCode(), s);
 	}
-	
+
 	public Map<Integer, Store> getMap(){
 		return storeMap;
 	}
-	
+
 	private void setProgress(int i) {
 		final PropertyChangeEvent EVENT_PROGRESS = new PropertyChangeEvent(this, "progress", progress, i);
 		firePropertyChanged(EVENT_PROGRESS);
 		progress=i;
 	}
-	
+
 	public void reset(){
 		for (ModuleInterface starter:modules.values())
-				((AbstractModule)starter).reset();
+			((AbstractModule)starter).reset();
 		storeMap.clear();
 		modules.clear();
-		done = false;			
+		done = false;
 		setProgress(0);
 		maximum = 1;
 	}
-	
+
 	public void run(){
 		execute();
 	}
-	
+
 	public void execute() {
 		final Runner r = new Runner();
 		r.start();
@@ -111,55 +111,54 @@ public class Manager{
 			e.printStackTrace();
 		}
 	}
-	
-	private class Runner extends Thread{ 
+
+	private class Runner extends Thread{
 
 		@Override
 		public void run() {
-		if (modules.isEmpty()) return;
-		StoreMonitor sm = new StoreMonitor();
-		sm.start();
-		final List<Object> threads= new ArrayList<>();
-		
-		for(ModuleInterface starter:modules.values()){
-			if (!starter.check()) {
-				IJ.error("Module not linked properly " + starter.getClass().getSimpleName());
-				break;
-			}	
-			starter.setService(service);
-			threads.add(service.submit(starter));
-			
-			try {
-				Thread.sleep(10); 						// HACK : give the module some time to start working
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			if (modules.isEmpty()) return;
+			StoreMonitor sm = new StoreMonitor();
+			sm.start();
+			final List<Object> threads= new ArrayList<>();
+
+			for(ModuleInterface starter:modules.values()){
+				if (!starter.check()) {
+					IJ.error("Module not linked properly " + starter.getClass().getSimpleName());
+					break;
+				}
+				starter.setService(service);
+				threads.add(service.submit(starter));
+
+				try {
+					Thread.sleep(10); 						// HACK : give the module some time to start working
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
-		}
-		try {
-			for(Object joiner:threads)
-				((Future<?>) joiner).get();
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-		}
-		done = true;
-		try {
-            sm.join(200);
-        } catch (InterruptedException ignore) {}
-		
-		final PropertyChangeEvent EVENT_DONE = new PropertyChangeEvent(this, "state", 0, STATE_DONE);
-		firePropertyChanged(EVENT_DONE);
-		return;
+			try {
+				for(Object joiner:threads)
+					((Future<?>) joiner).get();
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			}
+			done = true;
+			try {
+				sm.join(200);
+			} catch (InterruptedException ignore) {}
+
+			final PropertyChangeEvent EVENT_DONE = new PropertyChangeEvent(this, "state", 0, STATE_DONE);
+			firePropertyChanged(EVENT_DONE);
 		}
 	}
-	
+
 	private class StoreMonitor extends Thread {
 
 		@Override
 		public void run() {
 			while(!done){
 				try {
-	                Thread.sleep(200);
-	            } catch (InterruptedException ignore) {}
+					Thread.sleep(200);
+				} catch (InterruptedException ignore) {}
 				int max = 0;
 				int n = 0;
 				for(Integer key : storeMap.keySet()){
@@ -168,12 +167,11 @@ public class Manager{
 				}
 				if (max > maximum)
 					maximum = max;
-				
+
 				setProgress(Math.round(100-(float)max/maximum*100));
 			}
 		}
 
 	}
-
 
 }

@@ -21,9 +21,6 @@ import org.lemming.modules.TableLoader;
 import org.lemming.pipeline.ExtendableTable;
 
 import java.awt.Component;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-
 import javax.swing.JPanel;
 
 import java.awt.FlowLayout;
@@ -63,12 +60,7 @@ public class FilterPanel extends ConfigurationPanel implements ChangeListener {
 
 		JButton btnAdd = new JButton("Add");
 		panelButtons.add(btnAdd);
-		btnAdd.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed( final ActionEvent e ){
-				addPanel();
-			}
-		});
+		btnAdd.addActionListener(e -> addPanel());
 		btnAdd.setAlignmentY(Component.TOP_ALIGNMENT);
 
 		JButton btnRemove = new JButton("Remove");
@@ -76,12 +68,7 @@ public class FilterPanel extends ConfigurationPanel implements ChangeListener {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		add(scrollPane);
 		add(panelButtons);
-		btnRemove.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed( final ActionEvent e ){
-				removePanel();
-			}
-		});
+		btnRemove.addActionListener(e -> removePanel());
 		table = new ExtendableTable();
 	}
 	

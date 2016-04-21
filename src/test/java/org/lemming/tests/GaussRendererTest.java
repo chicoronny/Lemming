@@ -16,15 +16,14 @@ import org.lemming.plugins.GaussRenderer;
 public class GaussRendererTest {
 
 	private Manager pipe;
-	private ReadLocalizationPrecision3D reader;
 	private GaussRenderer gauss;
 	private Map<Integer, Store> map;
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		pipe = new Manager(Executors.newCachedThreadPool());
-		
-		reader = new ReadLocalizationPrecision3D(new File(System.getProperty("user.home")+"/ownCloud/storm/fitted.csv"),",");
+
+		ReadLocalizationPrecision3D reader = new ReadLocalizationPrecision3D(new File(System.getProperty("user.home") + "/ownCloud/storm/fitted.csv"), ",");
 		pipe.add(reader);
 		
 		gauss = new GaussRenderer(512, 512, 22.200, 22.800, 27.000, 27.600);

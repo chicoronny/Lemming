@@ -165,7 +165,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private static String lastDir = System.getProperty("user.home");
 	//private Roi imageRoi;
 	private List<Double> cameraProperties;
-	private ExecutorService service = Executors.newCachedThreadPool();
+	private final ExecutorService service = Executors.newCachedThreadPool();
 
 	/**
 	 * Create the frame.

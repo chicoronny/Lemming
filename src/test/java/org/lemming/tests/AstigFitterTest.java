@@ -31,7 +31,7 @@ public class AstigFitterTest {
 	@Before
 	public void setUp() throws Exception {
 		
-        File file = new File(System.getProperty("user.home")+"/ownCloud/storm/p500ast_.tif");
+        File file = new File(System.getProperty("user.home")+"/ownCloud/p500ast_.tif");
         
 		if (file.isDirectory()){
         	FolderOpener fo = new FolderOpener();
@@ -49,8 +49,8 @@ public class AstigFitterTest {
 		AbstractModule tif = new ImageLoader<>(loc_im, LemmingUtils.readCameraSettings("camera.props"));
 
 		AbstractModule peak = new NMSDetector(700,7,0);
-		AbstractModule fitter = new AstigFitter<>(7, LemmingUtils.readCSV("/media/backup/ownCloud/storm/calTest.csv"));
-		AbstractModule saver = new SaveLocalizations(new File("/media/backup/ownCloud/storm/test3.csv"));
+		AbstractModule fitter = new AstigFitter<>(7, LemmingUtils.readCSV(System.getProperty("user.home")+"/ownCloud/set1-calb.csv"));
+		AbstractModule saver = new SaveLocalizations(new File(System.getProperty("user.home")+"/ownCloud/test3.csv"));
 		
 		pipe = new Manager(Executors.newCachedThreadPool());
 		pipe.add(tif);

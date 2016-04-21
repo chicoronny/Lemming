@@ -31,24 +31,27 @@ import org.jfree.data.xy.XYSeriesCollection;
  * @author Ronny Sczech
  *
  */
-public class Calibration {
+class Calibration {
 
-	public static int INDEX_WX = 0;
-	public static int INDEX_WY = 1;
-	public static int INDEX_AX = 2;
-	public static int INDEX_AY = 3;
-	public static int INDEX_BX = 4;
-	public static int INDEX_BY = 5;
-	public static int INDEX_C = 6;
-	public static int INDEX_D = 7;
-	public static int INDEX_Mp = 8;
-	public static int PARAM_LENGTH = 9;
+	private static final int INDEX_WX = 0;
+	private static final int INDEX_WY = 1;
+	private static final int INDEX_AX = 2;
+	private static final int INDEX_AY = 3;
+	private static final int INDEX_BX = 4;
+	private static final int INDEX_BY = 5;
+	private static final int INDEX_C = 6;
+	private static final int INDEX_D = 7;
+	private static final int INDEX_Mp = 8;
+	private static final int PARAM_LENGTH = 9;
 	private JFrame plotWindow;
 
-	double[] zgrid;										// z positions of the slices in the stack
-	double[] Wx, Wy, Calibcurve;						// 1D and 2D fit results
-	double[] curveWx, curveWy;							// quadratically fitted curves
-	int nSlice=1;
+	private double[] zgrid;										// z positions of the slices in the stack
+	private double[] Wx;
+	private double[] Wy;
+	private double[] Calibcurve;						// 1D and 2D fit results
+	private double[] curveWx;
+	private double[] curveWy;							// quadratically fitted curves
+	private int nSlice=1;
 
 	private double[] param;
 	
@@ -261,13 +264,12 @@ public class Calibration {
 		/* SETUP SCATTER */
 
 		// Create the scatter data, renderer, and axis
-		XYDataset collection = xy;
 		XYItemRenderer renderer = new XYLineAndShapeRenderer(false, true);   // Shapes only
 		ValueAxis domain = new NumberAxis(domainName);
 		ValueAxis range = new NumberAxis(rangeName);
 
 		// Set the scatter data, renderer, and axis into plot
-		plot.setDataset(0, collection);
+		plot.setDataset(0, xy);
 		plot.setRenderer(0, renderer);
 		plot.setDomainAxis(0, domain);
 		plot.setRangeAxis(0, range);
@@ -285,13 +287,12 @@ public class Calibration {
 		/* SETUP SCATTER */
 
 		// Create the scatter data, renderer, and axis
-		XYDataset collection1 = dataset2;
 		XYItemRenderer renderer1 = new XYLineAndShapeRenderer(true, false);   // Lines only
 		ValueAxis domain1 = new NumberAxis(domainName);
 		ValueAxis range1 = new NumberAxis(rangeName);
 
 		// Set the scatter data, renderer, and axis into plot
-		plot.setDataset(0, collection1);
+		plot.setDataset(0, dataset2);
 		plot.setRenderer(0, renderer1);
 		plot.setDomainAxis(0, domain1);
 		plot.setRangeAxis(0, range1);
@@ -303,11 +304,10 @@ public class Calibration {
 		/* SETUP LINE */
 
 		// Create the line data, renderer, and axis
-		XYDataset collection2 = dataset1;
 		XYItemRenderer renderer2 = new XYLineAndShapeRenderer(false, true);   // Shapes only
 
 		// Set the line data, renderer, and axis into plot
-		plot.setDataset(1, collection2);
+		plot.setDataset(1, dataset1);
 		plot.setRenderer(1, renderer2);
 		//plot.setDomainAxis(1, domain1);
 		//plot.setRangeAxis(1, range1);
@@ -340,10 +340,10 @@ public class Calibration {
 	
 	private class csvWriter {
 
-		private Locale curLocale;
+		private final Locale curLocale;
 		private FileWriter w;
 
-		public csvWriter(File file) {
+		csvWriter(File file) {
 			this.curLocale = Locale.getDefault();
 			final Locale usLocale = new Locale("en", "US"); // setting us locale
 			Locale.setDefault(usLocale);

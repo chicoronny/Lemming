@@ -31,17 +31,18 @@ import net.imglib2.view.Views;
 
 public class PeakFinder<T extends RealType<T>> extends MultiRunModule implements Detector<T>{
 
-	public static final String NAME = "Peak Finder";
-	public static final String KEY = "PEAKFINDER";
-	public static final String INFO_TEXT = "<html>" + "Peak Finder Plugin" + "</html>";
-	private int size;
+	private static final String NAME = "Peak Finder";
+	private static final String KEY = "PEAKFINDER";
+	private static final String INFO_TEXT = "<html>" + "Peak Finder Plugin" + "</html>";
+	private final int size;
 	private double threshold;
-	private int gaussian;
+	private final int gaussian;
 	/**
 	 * @param threshold
 	 *            - threshold for subtracting background
 	 * @param size
 	 *            - kernel size
+	 * @param gaussian - gaussian size (0=omit)
 	 */
 	public PeakFinder(final double threshold, final int size, final int gaussian) {
 		setThreshold(threshold);
@@ -68,7 +69,7 @@ public class PeakFinder<T extends RealType<T>> extends MultiRunModule implements
 				counterList.add(res.getList().size());
 				return res;
 			} else {
-				res = new FrameElements<T>(null, frame);
+				res = new FrameElements<>(null, frame);
 				res.setLast(true);
 				return res;
 			}
@@ -164,7 +165,7 @@ public class PeakFinder<T extends RealType<T>> extends MultiRunModule implements
 	/**
 	 * @return Threshold
 	 */
-	public double getThreshold() {
+	private double getThreshold() {
 		return threshold;
 	}
 	
@@ -183,11 +184,11 @@ public class PeakFinder<T extends RealType<T>> extends MultiRunModule implements
 		return inputs.size()==1 && outputs.size()>=1;
 	}
 
-	@Plugin(type = DetectorFactory.class, visible = true)
+	@Plugin(type = DetectorFactory.class )
 	public static class Factory implements DetectorFactory {
 
 		private Map<String, Object> settings;
-		private PeakFinderPanel configPanel = new PeakFinderPanel();
+		private final PeakFinderPanel configPanel = new PeakFinderPanel();
 
 		@Override
 		public String getInfoText() {

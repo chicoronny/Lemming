@@ -23,21 +23,22 @@ import net.imglib2.view.Views;
 public class Calibrator {	
 	/////////////////////////////
 	// Results
-	private double[] zgrid;									// z positions of the slices in the stack
-	private volatile double[] Wx, Wy; 
-	private double[] E;
+	private final double[] zgrid;									// z positions of the slices in the stack
+	private final double[] Wx;
+	private final double[] Wy;
+	private final double[] E;
 	/////////////////////////////
     // Parameters from ImageStack
-	private int nSlice;
+	private final int nSlice;
 
 	/////////////////////////////
 	// Input from user
-    private int zstep;
+    private final int zstep;
     private int rangeStart, rangeEnd;					// Both ends of the restricted z range and length of the restriction
-    private volatile Rectangle roi;
+    private final Rectangle roi;
     
-	private ImageStack is;
-	private BSplines b;
+	private final ImageStack is;
+	private final BSplines b;
 	
 	public Calibrator(ImagePlus im, int zstep, Roi r){
 		this.is = im.getStack();
@@ -111,17 +112,13 @@ public class Calibrator {
 		System.arraycopy(Wy, rangeStart, rangedWy, 0, arraySize);
 		System.arraycopy(E, rangeStart, rangedE, 0, arraySize);
 
-		Thread t = new Thread(new Runnable() {
+		Thread t = new Thread(() -> {
+            b.init(rangedZ, rangedWx, rangedWy, rangedE);
 
-			@Override
-			public void run() {
-				b.init(rangedZ, rangedWx, rangedWy, rangedE);
-				
-				// Display result
-				//b.plotWxWyFitCurves();
-				b.plot(rangedE, "ellipticity");
-			}
-		});
+            // Display result
+            //b.plotWxWyFitCurves();
+            b.plot(rangedE, "ellipticity");
+        });
 		t.start();
 		try {
 			t.join();

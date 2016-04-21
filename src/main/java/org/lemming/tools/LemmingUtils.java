@@ -139,31 +139,26 @@ public class LemmingUtils {
         }
         return max;
     }
-    
-    /* Compute the min for any {@link Iterable}, like an {@link Img}.
-    *
-    * The only functionality we need for that is to iterate. Therefore we need no {@link Cursor}
-    * that can localize itself, neither do we need a {@link RandomAccess}. So we simply use the
-    * most simple interface in the hierarchy.*/
-    public static < T extends Comparable< T > & Type< T > > T computeMin(
-        final IterableInterval< T > input){
-        /// create a cursor for the image (the order does not matter)
-        final Cursor< T > cursor = input.cursor();
- 
-        // initialize min and max with the first image value
-        T type = cursor.next();
-        T min = type.copy();
- 
-        // loop over the rest of the data and determine min and max value
-        while ( cursor.hasNext() ){
-            // we need this type more than once
-            type = cursor.next();
- 
-            if ( type.compareTo( min ) < 0 )
-                min.set( type );
-        }
-        return min;
-    }
+
+	public static < T extends Comparable< T > & Type< T > > T computeMin(
+			final IterableInterval< T > input){
+		/// create a cursor for the image (the order does not matter)
+		final Cursor< T > cursor = input.cursor();
+
+		// initialize min and max with the first image value
+		T type = cursor.next();
+		T min = type.copy();
+
+		// loop over the rest of the data and determine min and max value
+		while ( cursor.hasNext() ){
+			// we need this type more than once
+			type = cursor.next();
+
+			if ( type.compareTo( min ) < 0 )
+				min.set( type );
+		}
+		return min;
+	}
 
     public static <T> long computeBin(final Histogram1d<T> hist) {
 		long[] histogram = hist.toLongArray();
