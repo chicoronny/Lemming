@@ -32,8 +32,13 @@ public class AbstractProvider< K extends PluginInterface > {
 		final PluginService pluginService = context.getService(PluginService.class);
 		final List<PluginInfo<K>> infos = pluginService.getPluginsOfType(cl);
 
-		final Comparator<PluginInfo<K>> priorityComparator = (o1, o2) -> o1.getPriority() > o2.getPriority() ? 1 : o1.getPriority() < o2.getPriority() ? -1 : 0;
-
+		final Comparator<PluginInfo<K>> priorityComparator = new Comparator<PluginInfo<K>>() {
+			@Override
+			public int compare(final PluginInfo<K> o1, final PluginInfo<K> o2) {
+				return o1.getPriority() > o2.getPriority() ? 1 : o1.getPriority() < o2.getPriority() ? -1 : 0;
+			}
+		};
+		
 		Collections.sort(infos, priorityComparator);
 
 		keys = new ArrayList<>(infos.size());

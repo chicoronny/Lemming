@@ -37,19 +37,34 @@ public class PeakFinderPanel extends ConfigurationPanel {
 		jTextFieldThreshold.setToolTipText("Threshold");
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		JLabel lblKernelSize = new JLabel("KernelSize");
 		
 		spinnerKernelSize = new JSpinner();
 		spinnerKernelSize.setToolTipText("Kernel Size");
-		spinnerKernelSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerKernelSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerKernelSize.setModel(new SpinnerNumberModel(10, 1, null, 1));
 		
 		JLabel lblGaussian = new JLabel("Gaussian");
 		
 		spinnerGaussian = new JSpinner();
-		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerGaussian.setToolTipText("Prefilter with Gaussian (0=no filtering)");
 		spinnerGaussian.setModel(new SpinnerNumberModel(0, 0, 20, 1));
 		GroupLayout groupLayout = new GroupLayout(this);

@@ -33,6 +33,8 @@ import javax.swing.JFrame;
 
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -265,7 +267,9 @@ public class HistogramPanel extends JPanel
 			jComboBoxFeature.setPreferredSize(new Dimension(80, 27));
 			jComboBoxFeature.setModel( jComboBoxFeatureModel );
 			jComboBoxFeature.setFont( FONT );
-			jComboBoxFeature.addActionListener(e1 -> comboBoxSelectionChanged());
+			jComboBoxFeature.addActionListener(new ActionListener(){
+				@Override
+				public void actionPerformed(ActionEvent e){comboBoxSelectionChanged();}});
 
 			createHistogramPlot();
 			chartPanel.setPreferredSize( new Dimension( 0, 0 ) );

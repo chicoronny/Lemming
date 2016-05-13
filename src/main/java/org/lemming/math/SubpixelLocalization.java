@@ -114,8 +114,6 @@ public class SubpixelLocalization {
 
 			if (foundStableMaxima) {
 				// set the results if everything went well
-				subpixelOffset.move(0.5, 0);
-				subpixelOffset.move(0.5, 1);
 				final double sx = FastMath.pow(subpixelOffset.getDoublePosition(0),2);
 				final double sy = FastMath.pow(subpixelOffset.getDoublePosition(1),2);
 				access.setPosition(currentPosition);

@@ -22,12 +22,13 @@ import ij.gui.StackWindow;
 import ij.plugin.FolderOpener;
 
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
 import javax.swing.JButton;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
 
 /**
  * a dialog for calibration parameters for use in 3D astigmatism fitter
@@ -63,11 +64,13 @@ class CalibrationDialog extends JDialog {
 		spinnerStepSize.setModel(new SpinnerNumberModel(10, null, null, 1));
 
 		JButton btnFitBeads = new JButton("Fit beads");
-		btnFitBeads.addActionListener(arg0 -> {
-        lblRange.setEnabled(true);
-        rangeSlider.setEnabled(true);
-        btnFitCurve.setEnabled(true);
-        });
+		btnFitBeads.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){
+				lblRange.setEnabled(true);
+				rangeSlider.setEnabled(true);
+				btnFitCurve.setEnabled(true);
+			}});
 		
 		lblRange = new JLabel("Range");
 		lblRange.setEnabled(false);
@@ -83,11 +86,15 @@ class CalibrationDialog extends JDialog {
 		rangeSlider.setPaintTicks(true);
 		
 		btnFitCurve = new JButton("Fit curve");
-		btnFitCurve.addActionListener(e -> btnSaveCalibration.setEnabled(true));
+		btnFitCurve.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){btnSaveCalibration.setEnabled(true);}});
 		btnFitCurve.setEnabled(false);
 		
 		btnSaveCalibration = new JButton("Save Calibration");
-		btnSaveCalibration.addActionListener(e -> saveCalibration());
+		btnSaveCalibration.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){saveCalibration();}});
 		btnSaveCalibration.setEnabled(false);
 		GroupLayout groupLayout = new GroupLayout(getContentPane());
 		groupLayout.setHorizontalGroup(
@@ -215,12 +222,5 @@ class CalibrationDialog extends JDialog {
     	calibrator.closePlotWindows();
     	setVisible(false);
 	}
-	
-	public static void main (String[] args){
-		SwingUtilities.invokeLater(() -> {
-            CalibrationDialog dlg = new CalibrationDialog(null);
-            dlg.setVisible(true);
-        });
 		
-	}
 }

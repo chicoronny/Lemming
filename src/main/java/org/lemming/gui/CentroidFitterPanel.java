@@ -38,12 +38,22 @@ public class CentroidFitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerWindowSize.setModel(new SpinnerNumberModel(10, null, null, 1));
 
 		JLabel lblCentroidThreshold = new JLabel("Centroid Threshold");
 		textFieldThreshold = new JTextField();
-		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		textFieldThreshold.setHorizontalAlignment(SwingConstants.TRAILING);
 		textFieldThreshold.setText("100");
 		textFieldThreshold.setColumns(10);

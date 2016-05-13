@@ -107,8 +107,8 @@ public class Symmetric2DFitter<T extends RealType<T>> {
 		}
 
 		double[] result = new double[7];
-		result[0] = fittedEG[0]+0.5;
-		result[1] = fittedEG[1]+0.5;
+		result[0] = fittedEG[0];
+		result[1] = fittedEG[1];
 		result[2] = fittedEG[2];
 		result[3] = fittedEG[3];
 		result[4] = fittedEG[4];

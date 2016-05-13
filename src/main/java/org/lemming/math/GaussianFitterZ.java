@@ -102,13 +102,13 @@ public class GaussianFitterZ<T extends RealType<T>> {
 
 		final double[] result = new double[10];
 		final double[] error = get3DError(fittedEG, eg);
-		result[0] = fittedEG[INDEX_X0]+0.5; // X
-		result[1] = fittedEG[INDEX_Y0]+0.5; // Y
-		result[2] = fittedEG[INDEX_Z0]; // Z
-		result[3] = error[INDEX_X0]; // Sx
-		result[4] = error[INDEX_Y0]; // Sy
-		result[5] = error[INDEX_Z0]; // Sz
-		result[6] = fittedEG[INDEX_I0]; // I0
+		result[0] = fittedEG[0]; // X								
+		result[1] = fittedEG[1]; // Y
+		result[2] = fittedEG[2]; // Z
+		result[3] = error[0]; // Sx
+		result[4] = error[1]; // Sy
+		result[5] = error[2]; // Sz
+		result[6] = fittedEG[3]; // I0
 		result[7] = RMS;
 		result[8] = iter;
 		result[9] = eval;
@@ -152,6 +152,7 @@ public class GaussianFitterZ<T extends RealType<T>> {
 		final double[] knots = (double[]) params.get("knotsX");
 		for (r=0; r<knots.length;++r)
 			if(fittedEG[INDEX_Z0]>knots[r]) break;
+		if(r==0)r=1;
 		final double hx = (knots[r]-knots[r-1])/24*sx;
 		final double hy = (knots[r]-knots[r-1])/24*sy;
 		error3d[2] = hx+hy;

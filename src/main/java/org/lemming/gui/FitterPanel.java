@@ -16,7 +16,10 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.awt.event.ActionEvent;
+
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
@@ -40,14 +43,21 @@ public class FitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerWindowSize.setModel(new SpinnerNumberModel(5, null, null, 1));
 		
 		lblCalibration = new JLabel("File");
 		lblCalibration.setAlignmentX(0.5f);
 
 		JButton btnCalibration = new JButton("Calib. File");
-		btnCalibration.addActionListener(e -> {
+		btnCalibration.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){
             JFileChooser fc = new JFileChooser(System.getProperty("user.home")+"/ownCloud/storm");
             fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fc.setDialogTitle("Import Calibration File");
@@ -58,17 +68,24 @@ public class FitterPanel extends ConfigurationPanel {
             calibFile = fc.getSelectedFile();
             lblCalibration.setText(calibFile.getName());
             fireChanged();
-        });
+        }});
 
 		JButton btnNewCalibration = new JButton("New Calibration");
-		btnNewCalibration.addActionListener(arg0 -> calibrate());
+		btnNewCalibration.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){calibrate();}});
 
 		JLabel lblThreshold = new JLabel("Threshold");
 		
 		textFieldThreshold = new JTextField();
 		textFieldThreshold.setHorizontalAlignment(SwingConstants.TRAILING);
-		textFieldThreshold.setText("100");
-		textFieldThreshold.addKeyListener(new WaitForKeyListener(1000, () -> fireChanged()));
+		textFieldThreshold.setText("10");
+		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		textFieldThreshold.setColumns(10);
 		
 		GroupLayout groupLayout = new GroupLayout(this);

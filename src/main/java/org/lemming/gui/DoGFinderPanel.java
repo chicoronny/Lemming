@@ -33,12 +33,22 @@ public class DoGFinderPanel extends ConfigurationPanel {
 		jTextFieldThreshold = new JTextField();
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		JLabel lblRadius = new JLabel("Radius");
 		
 		spinnerRadius = new JSpinner();
-		spinnerRadius.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerRadius.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerRadius.setModel(new SpinnerNumberModel(7, 1, null, 1));
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(

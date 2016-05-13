@@ -112,12 +112,16 @@ public class Calibrator {
 		System.arraycopy(Wy, rangeStart, rangedWy, 0, arraySize);
 		System.arraycopy(E, rangeStart, rangedE, 0, arraySize);
 
-		Thread t = new Thread(() -> {
-            b.init(rangedZ, rangedWx, rangedWy, rangedE);
+		Thread t = new Thread(new Runnable() {
 
-            // Display result
-            //b.plotWxWyFitCurves();
-            b.plot(rangedE, "ellipticity");
+			@Override
+			public void run() {
+	            b.init(rangedZ, rangedWx, rangedWy, rangedE);
+	
+	            // Display result
+	            //b.plotWxWyFitCurves();
+	            b.plot(rangedE, "ellipticity");
+			}
         });
 		t.start();
 		try {

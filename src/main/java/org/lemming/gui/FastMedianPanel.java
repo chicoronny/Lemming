@@ -35,7 +35,12 @@ public class FastMedianPanel extends ConfigurationPanel {
 		JLabel lblFrames = new JLabel("Frames");
 		
 		spinnerFrames = new JSpinner();
-		spinnerFrames.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerFrames.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		spinnerFrames.setModel(new SpinnerNumberModel(50, null, null, 1));
 		
 		chckbxInterpolating = new JCheckBox("Interpolation");
@@ -45,13 +50,23 @@ public class FastMedianPanel extends ConfigurationPanel {
 		textFieldThreshold = new JTextField();
 		textFieldThreshold.setText("10");
 		textFieldThreshold.setColumns(10);
-		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		JLabel lblWindowsize = new JLabel("WindowSize");
 		
 		spinnerWindowSize = new JSpinner();
 		spinnerWindowSize.setModel(new SpinnerNumberModel(15, 1, null, 1));
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, () -> fireChanged()));
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)

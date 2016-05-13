@@ -34,7 +34,7 @@ public class UnpackElements<T> extends SingleRunModule {
 				if (!list.isEmpty()){
 					Element last = list.remove(list.size()-1);
 					last.setLast(true);
-					list.forEach(this::newOutput);
+					for(Element l:list) newOutput(l);
 					newOutput(last);
 				} else {
 					newOutput(el);
@@ -42,7 +42,7 @@ public class UnpackElements<T> extends SingleRunModule {
 				return data;
 			}
 
-			list.forEach(this::newOutput);
+			for(Element l:list) newOutput(l);
 		} else if (data instanceof Localization){
 			counter++;
 			if (data.isLast()){

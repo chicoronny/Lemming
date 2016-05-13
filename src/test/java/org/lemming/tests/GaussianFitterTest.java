@@ -32,7 +32,7 @@ public class GaussianFitterTest {
 	@Before
 	public void setUp() throws Exception {
 		
-        File file = new File(System.getProperty("user.home")+"/ownCloud/set1.tif");
+        File file = new File(System.getProperty("user.home")+"/ownCloud/Tubulin1.tif");
         
 		if (file.isDirectory()){
         	FolderOpener fo = new FolderOpener();
@@ -49,9 +49,9 @@ public class GaussianFitterTest {
 		
 		AbstractModule tif = new ImageLoader<>(loc_im, LemmingUtils.readCameraSettings("camera.props"));
 
-		AbstractModule peak = new NMSDetector(700,10,0);
-		AbstractModule fitter = new AstigFitter<>(7, LemmingUtils.readCSV(System.getProperty("user.home")+"/ownCloud/set1-calb.csv"));
-		AbstractModule saver = new SaveLocalizations(new File(System.getProperty("user.home")+"/ownCloud/set1l.csv"));
+		AbstractModule peak = new NMSDetector(30,6,10);
+		AbstractModule fitter = new AstigFitter<>(6, LemmingUtils.readCSV(System.getProperty("user.home")+"/ownCloud/set1-calt.csv"));
+		AbstractModule saver = new SaveLocalizations(new File(System.getProperty("user.home")+"/ownCloud/Tubulin1-g.csv"));
 		
 		pipe = new Manager(Executors.newCachedThreadPool());
 		pipe.add(tif);
@@ -61,7 +61,7 @@ public class GaussianFitterTest {
 		
 		pipe.linkModules(tif, peak, true, loc_im.getStackSize());
 		pipe.linkModules(peak,fitter);
-		pipe.linkModules(fitter,saver,false, 100);
+		pipe.linkModules(fitter,saver,false, 128);
 		storeMap = pipe.getMap();
 	}
 

@@ -52,7 +52,7 @@ public class M2LE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	
 	private static final String NAME = "Fast Maximum Likelihood";
 	private static final String KEY = "M2LEFITTER";
-	private static final String INFO_TEXT = "<html>" + "Maximum likelihood estimation using the NVIDIA CUDA capabilities " + "</html>";
+	private static final String INFO_TEXT = "<html>" + "Fast maximum likelihood estimation using CUDA" + "</html>";
 	private static final int PARAMETER_LENGTH = 8;
 	private final int maxKernels;
 	private final FastTable<Kernel> kernelList;
@@ -66,9 +66,10 @@ public class M2LE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		kernelSize = 2 * size + 1;
 		this.maxKernels = maxKernels;
 		this.usablepixel = usablepixel;
-		this.wavenumber = wavenumber;
+		this.wavenumber = (float) (2*Math.PI/wavenumber);
 		kernelList = new FastTable<>();
-		
+		JCudaDriver.setExceptionsEnabled(true);
+		JCudaDriver.cuInit(0);
  		device = new CUdevice();
  		cuDeviceGet(device, 0); 
 	}
@@ -114,7 +115,6 @@ public class M2LE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		ExecutorService singleService = Executors.newSingleThreadExecutor();
 		GPUBlockThread t = new GPUBlockThread(device, kernelList, kernelSize, pixelDepth, usablepixel,
 				wavenumber, kernelList.size(), PARAMETER_LENGTH, "kernel_M2LEFit");
-		//MLE t = new MLE(kernelList, kernelSize, kernelList.size());
 		Future<Map<String, float[]>> f = singleService.submit(t);
 		try {
 			Map<String, float[]> res = f.get();
@@ -265,8 +265,12 @@ private class GPUBlockThread implements Callable<Map<String,float[]>> {
 		private Map<String,float[]> process(float data[], int Nfits, int blockSize){
 	    	long start = System.currentTimeMillis();
 	    	//put as many images as fit into a block
+	    	int n;
+	    	for (n = blockSize; n > 9; n--){
+	    		if (nKernels % n == 0) break;
+	    	}
 	    	int BlockSize = Math.max(9, blockSize);
-	    	BlockSize = Math.min(288, BlockSize);
+	    	BlockSize = Math.min(n, BlockSize);
 	    	//int Nfits = BlockSize * (int) Math.ceil( (float) dims[2]/BlockSize);
 	    	int size = sz2*Nfits;
 	    	

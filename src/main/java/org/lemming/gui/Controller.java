@@ -51,7 +51,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.SwingWorker.StateValue;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
@@ -105,11 +104,15 @@ import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JProgressBar;
 import javax.swing.border.TitledBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * The GUI main class controlling all user interactions
@@ -203,10 +206,13 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		contentPane.setLayout(gbl_contentPane);
 
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.addChangeListener(e -> {
-            saveSettings(panelLower);
+		tabbedPane.addChangeListener(new ChangeListener(){
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				saveSettings(panelLower);
             saveSettings(panelFilter);
-        });
+			}});
+		
 		tabbedPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		JPanel panelLoc = new JPanel();
@@ -451,7 +457,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		settings = new HashMap<>();
 		table = new ExtendableTable();
 		manager = new Manager(service);
-		manager.addPropertyChangeListener(evt -> {
+		manager.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals("progress")) {
                 int value = (Integer) evt.getNewValue();
                 progressBar.setValue(value);
@@ -463,13 +471,13 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
                 start = current;
             }
             if (evt.getPropertyName().equals("state")) {
-                StateValue value = (StateValue) evt.getNewValue();
-                if (value == StateValue.DONE) {
+				Integer value = (Integer) evt.getNewValue();
+                if (value == Manager.STATE_DONE) {
                     processed = true;
                     if (rendererWindow != null) rendererWindow.repaint();
                 }
             }
-        });
+        }});
 		createInitialPanels();
 		createDetectorProvider();
 		createFitterProvider();
@@ -1051,7 +1059,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		};
 		panelFilter.add(panelSecond, "SECOND");
 		final FilterPanel fp = new FilterPanel();
-		fp.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
+		fp.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
             if (table.filtersCollection.isEmpty()) {
                 filteredTable = null;
             } else {
@@ -1059,7 +1069,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
             }
             if (renderer != null)
                 rendererShow(settings);
-        });
+        }});
 		panelFilter.add(fp, FilterPanel.KEY);
 	}
 
@@ -1075,7 +1085,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			detectorNames.add(detectorProvider.getFactory(key).getName());
 			infoTexts.add(detectorProvider.getFactory(key).getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
+			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
+				@Override
+				public void propertyChange(PropertyChangeEvent evt) {
                 Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
                 detectorFactory.setAndCheckSettings(value);
                 detector = detectorFactory.getDetector();
@@ -1083,7 +1095,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
                     ppPreview();
                 else
                     detectorPreview();
-            });
+            }});
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = detectorNames.toArray(new String[] {});
@@ -1103,7 +1115,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
 			if (!factory.setAndCheckSettings(panelDown.getSettings())) continue;
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> fitterPreview());
+			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
+				@Override
+				public void propertyChange(PropertyChangeEvent evt) {fitterPreview();}});
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = fitterNames.toArray(new String[] {});
@@ -1123,13 +1137,16 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			rendererNames.add(factory.getName());
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
-			panelDown.addPropertyChangeListener(ConfigurationPanel.propertyName, evt -> {
-                Map<String, Object> map = (Map<String, Object>) evt.getNewValue();
-                if (processed)
-                    rendererShow(map);
-                else
-                    rendererPreview(map);
-            });
+			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
+				@Override
+				public void propertyChange(PropertyChangeEvent evt) {
+					Map<String, Object> map = (Map<String, Object>) evt.getNewValue();
+					if (processed)
+						rendererShow(map);
+					else
+						rendererPreview(map);
+				}
+			});
 			panelFilter.add(panelDown, key);
 		}
 		String[] names = rendererNames.toArray(new String[] {});

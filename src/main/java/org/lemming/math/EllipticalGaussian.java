@@ -37,32 +37,38 @@ class EllipticalGaussian implements OptimizationData {
 
 	
     public MultivariateVectorFunction getModelFunction() {
-        return params_ -> {
-            double[] retVal = new double[xgrid.length];
-            for(int i = 0; i < xgrid.length; i++) {
-                retVal[i] = getValue(params_, xgrid[i], ygrid[i]);
+        return new MultivariateVectorFunction() {
+            @Override
+            public double[] value(double[] params_) throws IllegalArgumentException {
+            	final double[] retVal = new double[xgrid.length];
+                for(int i = 0; i < xgrid.length; i++) {
+                    retVal[i] = getValue(params_, xgrid[i], ygrid[i]);
+                }
+                return retVal;
             }
-            return retVal;
         };
     }
     
     public MultivariateMatrixFunction getModelFunctionJacobian() {
-        return point -> {
+        return new MultivariateMatrixFunction() {
+            @Override
+            public double[][] value(double[] point) throws IllegalArgumentException {
 
-             double[][] jacobian = new double[xgrid.length][PARAM_LENGTH];
-
-             for (int i = 0; i < xgrid.length; ++i) {
-                 final double ex = Ex(xgrid[i], point);
-                 final double ey = Ey(ygrid[i], point);
-                 jacobian[i][INDEX_X0] = point[INDEX_I0]*ey*dEx(xgrid[i],point);
-                 jacobian[i][INDEX_Y0] = point[INDEX_I0]*ex*dEy(ygrid[i],point);
-                 jacobian[i][INDEX_SX] = point[INDEX_I0]*ey*dEsx(xgrid[i],point);
-                 jacobian[i][INDEX_SY] = point[INDEX_I0]*ex*dEsy(ygrid[i],point);
-                 jacobian[i][INDEX_I0] = ex*ey;
-                 jacobian[i][INDEX_Bg] = 1;
-             }
-
-            return jacobian;
+            	final double[][] jacobian = new double[xgrid.length][PARAM_LENGTH];
+            	 
+        	     for (int i = 0; i < xgrid.length; ++i) {
+        	    	 final double ex = Ex(xgrid[i], point);
+        	    	 final double ey = Ey(ygrid[i], point);
+        	    	 jacobian[i][INDEX_X0] = point[INDEX_I0]*ey*dEx(xgrid[i],point);
+        	    	 jacobian[i][INDEX_Y0] = point[INDEX_I0]*ex*dEy(ygrid[i],point);
+        	    	 jacobian[i][INDEX_SX] = point[INDEX_I0]*ey*dEsx(xgrid[i],point);
+        	    	 jacobian[i][INDEX_SY] = point[INDEX_I0]*ex*dEsy(ygrid[i],point);
+        	    	 jacobian[i][INDEX_I0] = ex*ey;
+        	    	 jacobian[i][INDEX_Bg] = 1;
+        	     }
+        	     
+				return jacobian;
+            }
         };
     }
 

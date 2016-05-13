@@ -31,7 +31,7 @@ import net.imglib2.view.Views;
 
 import org.lemming.factories.FitterFactory;
 import org.lemming.gui.ConfigurationPanel;
-import org.lemming.gui.FitterPanel;
+import org.lemming.gui.MLE_FitterPanel;
 import org.lemming.interfaces.Element;
 import org.lemming.interfaces.Frame;
 import org.lemming.modules.Fitter;
@@ -111,15 +111,15 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 			f.run();
 			Map<String, float[]> res = f.get();
 			float[] par = res.get("Parameters");
-			float[] fits = res.get("CRLBs");
+			float[] fits = res.get("LogLikelihood");
 			int ksize = kernelList.size();
 			for (int i=0;i<ksize;i++){
 				long xstart = kernelList.get(i).getRoi().min(0);
 				long ystart = kernelList.get(i).getRoi().min(1);
-				float x = par[i] + xstart + 0.5f;
-				float y = par[ksize+i] + ystart + 0.5f;
+				float x = par[i] + xstart;
+				float y = par[ksize+i] + ystart;
 				float intensity = par[2*ksize+i];
-				float fitI = fits[2*ksize+i];
+				float fitI = fits[i];
 				float bg = par[3*ksize+i];
 				float sx = par[4*ksize+i];
 				float sy = par[5*ksize+i];
@@ -312,8 +312,8 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	        checkResult(cudaMemcpy(Pointer.to(hostLogLikelihood), d_LogLikelihood, Nfits * Sizeof.FLOAT, cudaMemcpyDeviceToHost));
 	        
 	        result.put("Parameters", hostParameters);
-	        result.put("CRLBs", hostCRLBs);
-	        //result.put("LogLikelihood", hostLogLikelihood);
+	        //result.put("CRLBs", hostCRLBs);
+	        result.put("LogLikelihood", hostLogLikelihood);
 	        
 	        cudaFree(d_Parameters);
 	        cudaFree(d_CRLBs);
@@ -334,7 +334,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	public static class Factory implements FitterFactory {
 
 		private final Map<String, Object> settings = new HashMap<>(3);
-		private final FitterPanel configPanel = new FitterPanel();
+		private final ConfigurationPanel configPanel = new MLE_FitterPanel();
 
 		@Override
 		public String getInfoText() {
@@ -366,7 +366,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 		@Override
 		public <T extends RealType<T>> Fitter<T> getFitter() {
-			final int windowSize = (int) settings.get(FitterPanel.KEY_WINDOW_SIZE);
+			final int windowSize = (int) settings.get(MLE_FitterPanel.KEY_WINDOW_SIZE);
 			final int maxKernels = (int) settings.get("MAXKERNELS");
 			return new MLE_Fitter<>(windowSize, maxKernels);
 		}
@@ -378,7 +378,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 		@Override
 		public boolean hasGPU() {
-			System.load(System.getProperty("user.dir")+"/jars/libJCudaDriver-linux-x86_64.so");
+			System.load(System.getProperty("user.dir")+"/lib/libJCudaDriver-linux-x86_64.so");
 			int res = JCudaDriver.cuInit(0);
 			if (res != CUresult.CUDA_SUCCESS) return false;
 			JCudaDriver.setExceptionsEnabled(true);

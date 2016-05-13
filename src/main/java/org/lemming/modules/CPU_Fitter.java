@@ -34,17 +34,21 @@ public abstract class CPU_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 			for (int taskNum = 0; taskNum < numThreads; ++taskNum) {
 
-				final Callable<Void> r = () -> {
-                    while (running) {
-                        if (Thread.currentThread().isInterrupted())
-                            break;
-                        Element data = nextInput();
-                        if (data != null)
-                            newOutput(processData(data));
-                        else
-                            pause(10);
-                    }
-                    return null;
+				final Callable<Void> r = new Callable<Void>() {
+
+					@Override
+					public Void call() {
+		                while (running) {
+		                    if (Thread.currentThread().isInterrupted())
+		                        break;
+		                    Element data = nextInput();
+		                    if (data != null)
+		                        newOutput(processData(data));
+		                    else
+		                        pause(10);
+		                }
+		                return null;
+					}
                 };
 				futures.add(service.submit(r));
 			}
@@ -71,16 +75,20 @@ public abstract class CPU_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 			for (int taskNum = 0; taskNum < numThreads; ++taskNum) {
 
-				final Callable<Void> r = () -> {
-                    while (running) {
-                        if (Thread.currentThread().isInterrupted())
-                            break;
-                        Element data = nextInput();
-                        if (data != null)
-                            processData(data);
-                        else pause(10);
-                    }
-                    return null;
+				final Callable<Void> r = new Callable<Void>() {
+
+					@Override
+					public Void call() {
+	                    while (running) {
+	                        if (Thread.currentThread().isInterrupted())
+	                            break;
+	                        Element data = nextInput();
+	                        if (data != null)
+	                            processData(data);
+	                        else pause(10);
+	                    }
+	                    return null;
+					}
                 };
 				futures.add(service.submit(r));
 			}
@@ -124,7 +132,7 @@ public abstract class CPU_Fitter<T extends RealType<T>> extends Fitter<T> {
 	private void process(FrameElements<T> data) {
 		List<Element> res = fit(data.getList(), data.getFrame(), size);
 		counterList.add(res.size());
-		res.forEach(this::newOutput);
+		for (Element l:res) newOutput(l);
 	}
 
 	private void afterRun() {

@@ -92,7 +92,7 @@ public class CentroidFitterRA<T extends RealType<T>>  {
 		for (int i = 0; i < n; i++){
 			if (sum[i] == 0)
 				return null;
-			r[i] = (r[i] / sum[i]) + center.getDoublePosition(i) + 0.5;
+			r[i] = (r[i] / sum[i]) + center.getDoublePosition(i);
 		}
 
 		double[] dev = new double[n];

@@ -42,12 +42,22 @@ public class GaussRendererPanel extends ConfigurationPanel {
 		textXBins = new JTextField();
 		textXBins.setHorizontalAlignment(SwingConstants.TRAILING);
 		textXBins.setText("512");
-		textXBins.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		textXBins.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		textYBins = new JTextField();
 		textYBins.setHorizontalAlignment(SwingConstants.TRAILING);
 		textYBins.setText("512");
-		textYBins.addKeyListener(new WaitForKeyListener(500, () -> fireChanged()));
+		textYBins.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		labelX2 = new JLabel("100");
 		

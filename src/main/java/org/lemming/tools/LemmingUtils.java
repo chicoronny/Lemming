@@ -249,6 +249,7 @@ public class LemmingUtils {
 				polynomsX[n]=new PolynomialFunction(stringToDoubleArray(line));
 			}
 			map.put("psx", new PolynomialSplineFunction(knotsX,polynomsX));
+			map.put("knotsX", knotsX);
 			line=br.readLine();
 			if (!line.contains("--")) System.err.println("Corrupt File!");
 			line=br.readLine();

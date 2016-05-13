@@ -50,7 +50,7 @@ public abstract class Renderer extends MultiRunModule {
 	}
 	
 	public void preview(List<Element> previewList) {
-		previewList.forEach(this::processData);
+		for(Element l:previewList) newOutput(l);
 		double max = ip.getStatistics().histMax;
 		ip.getProcessor().setMinAndMax(0, max);
 		ip.updateAndRepaintWindow();

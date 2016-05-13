@@ -32,7 +32,6 @@ public class NMSDetector<T extends RealType<T> & NativeType<T>> extends MultiRun
 	private static final String INFO_TEXT = "<html>" + "NMS Detector Plugin" + "</html>";
 	private final double threshold;
 	private final int n_;
-	private int counter = 0;
 	private final int gaussian;
 
 	public NMSDetector(final double threshold, final int size, final int gaussian) {
@@ -75,7 +74,7 @@ public class NMSDetector<T extends RealType<T> & NativeType<T>> extends MultiRun
 		final RandomAccess<T> ro = pixels.randomAccess();
 		// compute max of the Image
 		final T max = LemmingUtils.computeMax(Views.iterable(pixels));
-		final double threshold_ = max.getRealDouble() / 100.0 * threshold;
+		double threshold_ = max.getRealDouble() / 100.0 * threshold;
 		if(gaussian>0){
 			for ( int d = 0; d < pixels.numDimensions(); ++d )
 	            sigma[ d ] = gaussian;
@@ -155,7 +154,6 @@ public class NMSDetector<T extends RealType<T> & NativeType<T>> extends MultiRun
 					T value = ro.get();
 					if (value.getRealDouble() > threshold_) {
 						found.add(new Localization(mi * frame.getPixelDepth(), mj * frame.getPixelDepth(), value.getRealDouble() ,frame.getFrameNumber()));
-						counter++;
 					}
 				}
 			}

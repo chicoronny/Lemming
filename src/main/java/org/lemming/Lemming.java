@@ -22,13 +22,17 @@ class Lemming implements PlugIn {
 	}
 
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> {
-            try {
+		SwingUtilities.invokeLater(new Runnable() {
+            
+			@Override
+			public void run() {
+			try {
                 Controller frame = new Controller();
                 frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+			}
         });
 	}
 

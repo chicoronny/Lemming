@@ -186,8 +186,7 @@ public class Gradient<T extends RealType<T>>  {
 		
 		if (cx<op.min(0) || cx>op.max(0) || cy<op.min(1) || cy>op.max(1))
 			return null;
-		
-		final RealRandomAccess<T> interpolant = Views.interpolate(op, new LanczosInterpolatorFactory<>()).realRandomAccess();
+		final RealRandomAccess<T> interpolant = Views.interpolate(op, new LanczosInterpolatorFactory<T>()).realRandomAccess();
 		interpolant.setPosition(new double[]{cx, cy});
 		final double intensity = interpolant.get().getRealDouble();
 		
