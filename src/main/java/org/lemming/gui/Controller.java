@@ -1118,6 +1118,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			fitterNames.add(factory.getName());
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
+			factory.setAndCheckSettings(panelDown.getSettings());
 			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
 				@Override
 				public void propertyChange(PropertyChangeEvent evt) {
