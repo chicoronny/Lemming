@@ -210,7 +210,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
 				saveSettings(panelLower);
-            saveSettings(panelFilter);
+				saveSettings(panelFilter);
 			}});
 		
 		tabbedPane.setBorder(new EmptyBorder(0, 0, 0, 0));
@@ -838,6 +838,9 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		((TitledBorder) panelLower.getBorder()).setTitle(fitterFactory.getName());
 		((CardLayout) panelLower.getLayout()).show(panelLower, key);
 		System.out.println("Fitter_" + index + " : " + key);
+		ConfigurationPanel panelDown = getConfigSettings(panelLower);
+		if (!fitterFactory.setAndCheckSettings(panelDown.getSettings()))
+			return;
 		fitter = fitterFactory.getFitter();
 		fitterPreview();
 		panelLower.repaint();
@@ -1088,14 +1091,15 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
 				@Override
 				public void propertyChange(PropertyChangeEvent evt) {
-                Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
-                detectorFactory.setAndCheckSettings(value);
-                detector = detectorFactory.getDetector();
-                if (detectorFactory.hasPreProcessing())
-                    ppPreview();
-                else
-                    detectorPreview();
-            }});
+				if(evt.getPropertyName().contains(ConfigurationPanel.propertyName)){
+	                Map<String, Object> value = (Map<String, Object>) evt.getNewValue();
+	                detectorFactory.setAndCheckSettings(value);
+	                detector = detectorFactory.getDetector();
+	                if (detectorFactory.hasPreProcessing())
+	                    ppPreview();
+	                else
+	                    detectorPreview();
+            }}});
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = detectorNames.toArray(new String[] {});
@@ -1114,10 +1118,17 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			fitterNames.add(factory.getName());
 			infoTexts.add(factory.getInfoText());
 			final ConfigurationPanel panelDown = factory.getConfigurationPanel();
-			if (!factory.setAndCheckSettings(panelDown.getSettings())) continue;
 			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
 				@Override
-				public void propertyChange(PropertyChangeEvent evt) {fitterPreview();}});
+				public void propertyChange(PropertyChangeEvent evt) {
+					if (evt.getPropertyName().contains(ConfigurationPanel.propertyName)){
+						if (fitter == null){
+							ConfigurationPanel panelDown = getConfigSettings(panelLower);
+							if (!fitterFactory.setAndCheckSettings(panelDown.getSettings())) return;
+							fitter = fitterFactory.getFitter();
+						}
+						fitterPreview();
+				}}});
 			panelLower.add(panelDown, key);
 		}
 		final String[] names = fitterNames.toArray(new String[] {});
@@ -1140,12 +1151,13 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			panelDown.addPropertyChangeListener(new PropertyChangeListener() {
 				@Override
 				public void propertyChange(PropertyChangeEvent evt) {
+				if (evt.getPropertyName().contains(ConfigurationPanel.propertyName)){
 					Map<String, Object> map = (Map<String, Object>) evt.getNewValue();
 					if (processed)
 						rendererShow(map);
 					else
 						rendererPreview(map);
-				}
+				}}
 			});
 			panelFilter.add(panelDown, key);
 		}

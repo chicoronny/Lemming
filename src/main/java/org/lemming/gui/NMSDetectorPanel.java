@@ -22,6 +22,12 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 		
 		spinnerThreshold = new JSpinner();
 		spinnerThreshold.setModel(new SpinnerNumberModel(10, 1, null, 1));
+		spinnerThreshold.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+			@Override
+			public void run() {
+				fireChanged();
+			}
+		}));
 		
 		JLabel lblStepsize = new JLabel("StepSize");
 		

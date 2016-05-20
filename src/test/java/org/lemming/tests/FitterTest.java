@@ -117,6 +117,40 @@ class FitterTest<T extends RealType<T> & NativeType<T>> {
 		img.setOverlay(layer);
 	}
 
+
+	public void groundTruth(){
+		final Overlay layer = img.getOverlay();
+		final double pixelSize=img.getCalibration().pixelDepth;
+		final FloatPolygon points = new FloatPolygon();
+		points.addPoint(35146.07, 7967.07);
+		points.addPoint(20664.84, 25686.89);
+		points.addPoint(19174.15, 7070.68);
+		points.addPoint(35447.20, 14919.11);
+		points.addPoint(28790.34, 3925.55);
+		points.addPoint(27807.74, 7305.48);
+		points.addPoint(26126.79, 11352.91);
+		points.addPoint(18718.43, 17314.28);
+		points.addPoint(9963.56, 28163.49);
+		points.addPoint(11145.80, 8031.15);
+		points.addPoint(17347.55, 9120.66);
+		points.addPoint(11869.19, 7995.76);
+		points.addPoint(9982.00, 24554.43);
+		points.addPoint(9006.98, 26516.96);
+		points.addPoint(14804.10, 27889.68);
+		points.addPoint(18427.59, 32786.89);
+		points.addPoint(8873.59, 10350.40);
+		points.addPoint(10875.00, 18569.29);
+		for(int i=0;i<points.npoints;i++){
+			points.xpoints[i]/=pixelSize;
+			points.ypoints[i]/=pixelSize;
+		}
+		final Roi roi = new PointRoi(points);
+		roi.setStrokeColor(Color.yellow);
+		layer.add(roi);
+		img.setOverlay(layer);
+	}
+
+
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		final FitterTest<T> ft = new FitterTest<>();
 		final FrameElements<T> el = ft.setUp();
@@ -149,6 +183,7 @@ class FitterTest<T extends RealType<T> & NativeType<T>> {
 		gf.setOutput(store);
 		gf.processData(el);
 		ft.showResults(store,Color.red);
+		ft.groundTruth();
 
 		// M2LE Java
 //		System.out.println("M2LE\n");

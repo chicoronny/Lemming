@@ -107,7 +107,7 @@ public class GaussianFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 	public static class Factory implements FitterFactory {
 
 		private Map<String, Object> settings;
-		private final FitterPanel configPanel = new FitterPanel();
+		private final ConfigurationPanel configPanel = new FitterPanel();
 
 		@Override
 		public String getInfoText() {

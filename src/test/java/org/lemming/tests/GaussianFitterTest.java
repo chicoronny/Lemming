@@ -48,7 +48,6 @@ public class GaussianFitterTest {
 		    throw new Exception("File not found");
 		
 		AbstractModule tif = new ImageLoader<>(loc_im, LemmingUtils.readCameraSettings("camera.props"));
-
 		AbstractModule peak = new NMSDetector(30,6,10);
 		AbstractModule fitter = new AstigFitter<>(6, LemmingUtils.readCSV(System.getProperty("user.home")+"/ownCloud/set1-calt.csv"));
 		AbstractModule saver = new SaveLocalizations(new File(System.getProperty("user.home")+"/ownCloud/Tubulin1-g.csv"));

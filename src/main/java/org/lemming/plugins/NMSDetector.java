@@ -208,7 +208,7 @@ public class NMSDetector<T extends RealType<T> & NativeType<T>> extends MultiRun
 
 		@Override
 		public <T extends RealType<T> & NativeType<T>> Detector<T> getDetector() {
-			final double threshold = (Double) settings.get(NMSDetectorPanel.KEY_NMS_THRESHOLD);
+			final int threshold = (Integer) settings.get(NMSDetectorPanel.KEY_NMS_THRESHOLD);
 			final int stepSize = (Integer) settings.get(NMSDetectorPanel.KEY_NMS_STEPSIZE);
 			final int gaussian = (Integer) settings.get(NMSDetectorPanel.KEY_NMS_GAUSSIAN_SIZE);
 			return new NMSDetector<>(threshold, stepSize, gaussian);

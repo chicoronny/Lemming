@@ -254,22 +254,19 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	    	//int Nfits = BlockSize * (int) Math.ceil( (float) dims[2]/BlockSize);
 	    	int size = sz2*Nfits;
 	    	
+	    	// create new context
 	    	CUcontext context = new CUcontext();
 	    	checkResult(JCudaDriver.cuCtxCreate(context, 0, device));
-			//JCudaDriver.cuProfilerStart();
-	    	
 	    	// Load the ptx file.
 	        CUmodule module = new CUmodule();
 	        checkResult(JCudaDriver.cuModuleLoad(module, ptxFileName));
 	        // Obtain a function pointer to the needed function.
 	        CUfunction function = new CUfunction();
-	        checkResult(JCudaDriver.cuModuleGetFunction(function, module, functionName));
-	    	    	
+	        checkResult(JCudaDriver.cuModuleGetFunction(function, module, functionName));	
 	    	// Allocate the device input data, and copy the host input data to the device
 	    	Pointer d_data = new Pointer();
 	    	checkResult(cudaMalloc(d_data, size * Sizeof.FLOAT));
 	    	checkResult(cudaMemcpy(d_data, Pointer.to(data), size * Sizeof.FLOAT, cudaMemcpyHostToDevice));
-	        
 	        // Allocate device output memory
 	    	Pointer d_Parameters = new Pointer();
 	    	checkResult(cudaMalloc(d_Parameters, PARAMETER_LENGTH * Nfits * Sizeof.FLOAT));
@@ -378,8 +375,14 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 
 		@Override
 		public boolean hasGPU() {
+			if (System.getProperty("os.name").contains("inux"))
 			System.load(System.getProperty("user.dir")+"/lib/libJCudaDriver-linux-x86_64.so");
-			int res = JCudaDriver.cuInit(0);
+			int res;
+			try {
+				res = JCudaDriver.cuInit(0);
+			} catch (Exception e) {
+				return false;
+			}
 			if (res != CUresult.CUDA_SUCCESS) return false;
 			JCudaDriver.setExceptionsEnabled(true);
 	 		cudaDeviceProp prop = new cudaDeviceProp();
