@@ -678,7 +678,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 			final ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
 			new ContrastEnhancer().stretchHistogram(ip, 0.3, stats);
 			lblFile.setText(loc_im.getTitle());
-			validate();
 		}
 	}
 
