@@ -40,11 +40,9 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Rectangle;
-
-import javax.swing.JButton;
-
 import java.awt.FlowLayout;
 
+import javax.swing.JButton;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JComponent;
@@ -94,8 +92,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.awt.Component;
 
 import java.awt.Color;
@@ -168,7 +164,6 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private static String lastDir = System.getProperty("user.home");
 	//private Roi imageRoi;
 	private List<Double> cameraProperties;
-	private final ExecutorService service = Executors.newCachedThreadPool();
 
 	/**
 	 * Create the frame.
@@ -185,7 +180,15 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 				if (rendererWindow != null)
 					rendererWindow.close();
 				Locale.setDefault(curLocale);
-				service.shutdown();
+				for (Component comp : panelLower.getComponents()) {
+					ConfigurationPanel s = ((ConfigurationPanel) comp);
+					s.close();
+				}
+				for (Component comp : panelFilter.getComponents()) {
+					ConfigurationPanel s = ((ConfigurationPanel) comp);
+					s.close();
+				}
+				System.exit(0);
 			}
 		});
 		try {
@@ -456,7 +459,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		Locale.setDefault(usLocale);
 		settings = new HashMap<>();
 		table = new ExtendableTable();
-		manager = new Manager(service);
+		manager = new Manager();
 		manager.addPropertyChangeListener(new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
@@ -943,6 +946,8 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 					* previewerWindow.getImagePlus().getCalibration().pixelDepth); 
 			rendererSettings.put(RendererFactory.KEY_ymax, previewerWindow.getImagePlus().getHeight()
 					* previewerWindow.getImagePlus().getCalibration().pixelDepth);
+			rendererSettings.put(RendererFactory.KEY_zmin, previewerWindow.getImagePlus().getStatistics().histMin);
+			rendererSettings.put(RendererFactory.KEY_zmax, previewerWindow.getImagePlus().getStatistics().histMax);
 		}
 		settings.putAll(rendererSettings);
 		rendererFactory.setAndCheckSettings(rendererSettings);

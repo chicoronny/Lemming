@@ -2,7 +2,6 @@ package org.lemming.tools;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -16,12 +15,13 @@ import java.util.concurrent.TimeUnit;
 public class WaitForKeyListener implements KeyListener {
 	
 	private long delay = 1000;
-	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService executor;
 	private ScheduledFuture< ? > future;
 	private final Runnable command;
 
 
-	public WaitForKeyListener(long delay, Runnable command) {
+	public WaitForKeyListener(ScheduledExecutorService executor, long delay, Runnable command) {
+		this.executor = executor;
 		this.delay = delay;
 		this.command = command;
 	}

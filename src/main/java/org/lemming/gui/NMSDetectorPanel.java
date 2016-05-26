@@ -22,7 +22,7 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 		
 		spinnerThreshold = new JSpinner();
 		spinnerThreshold.setModel(new SpinnerNumberModel(10, 1, null, 1));
-		spinnerThreshold.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerThreshold.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -33,7 +33,7 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 		
 		spinnerStepSize = new JSpinner();
 		spinnerStepSize.setFont(new Font("Dialog", Font.PLAIN, 12));
-		spinnerStepSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerStepSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -44,7 +44,7 @@ public class NMSDetectorPanel extends ConfigurationPanel {
 		JLabel labelGaussian = new JLabel("Gaussian");
 		
 		spinnerGaussian = new JSpinner();
-		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerGaussian.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

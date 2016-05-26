@@ -119,7 +119,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 				float x = par[i] + xstart;
 				float y = par[ksize+i] + ystart;
 				float intensity = par[2*ksize+i];
-				float fitI = fits[i];
+				float fitI = -fits[i];
 				float bg = par[3*ksize+i];
 				float sx = par[4*ksize+i];
 				float sy = par[5*ksize+i];

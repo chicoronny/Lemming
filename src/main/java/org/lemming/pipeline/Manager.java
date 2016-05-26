@@ -5,7 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -31,9 +34,14 @@ public class Manager{
 	private final ExecutorService service;
 	private final List< PropertyChangeListener > changeListeners = new ArrayList<>();
 	private int progress;
+	private String name="new Thread";
 
 	public Manager(ExecutorService service) {
 		this.service = service;
+	}
+
+	public Manager() {
+		service = Executors.newCachedThreadPool(new MyThreadFactory());
 	}
 
 	public void addPropertyChangeListener( final PropertyChangeListener listener ){
@@ -107,6 +115,8 @@ public class Manager{
 		r.start();
 		try {
 			r.join();
+			service.shutdown();
+			service.awaitTermination(5, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -126,6 +136,7 @@ public class Manager{
 					IJ.error("Module not linked properly " + starter.getClass().getSimpleName());
 					break;
 				}
+				name = starter.getClass().getSimpleName();
 				starter.setService(service);
 				threads.add(service.submit(starter));
 
@@ -139,7 +150,7 @@ public class Manager{
 				for(Object joiner:threads)
 					((Future<?>) joiner).get();
 			} catch (Exception e) {
-				System.err.println(e.getMessage());
+				e.printStackTrace();
 			}
 			done = true;
 			try {
@@ -173,5 +184,12 @@ public class Manager{
 		}
 
 	}
+	
+	private class MyThreadFactory implements ThreadFactory {
+		
+			@Override
+		public Thread newThread(Runnable r) {
+			return new Thread(r, name);
+		}};
 
 }

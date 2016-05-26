@@ -37,7 +37,7 @@ public class PeakFinderPanel extends ConfigurationPanel {
 		jTextFieldThreshold.setToolTipText("Threshold");
 		jTextFieldThreshold.setHorizontalAlignment(SwingConstants.RIGHT);
 		jTextFieldThreshold.setText("100");
-		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+		jTextFieldThreshold.addKeyListener(new WaitForKeyListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -48,7 +48,7 @@ public class PeakFinderPanel extends ConfigurationPanel {
 		
 		spinnerKernelSize = new JSpinner();
 		spinnerKernelSize.setToolTipText("Kernel Size");
-		spinnerKernelSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerKernelSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -59,7 +59,7 @@ public class PeakFinderPanel extends ConfigurationPanel {
 		JLabel lblGaussian = new JLabel("Gaussian");
 		
 		spinnerGaussian = new JSpinner();
-		spinnerGaussian.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerGaussian.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

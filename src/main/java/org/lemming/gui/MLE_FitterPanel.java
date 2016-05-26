@@ -40,7 +40,7 @@ public class MLE_FitterPanel extends ConfigurationPanel {
 		
 		spinnerWindowSize = new JSpinner();
 		spinnerWindowSize.setFont(new Font("Dialog", Font.PLAIN, 12));
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

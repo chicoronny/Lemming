@@ -43,7 +43,7 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -81,7 +81,7 @@ public class M2LE_FitterPanel extends ConfigurationPanel {
 		textFieldUsablePixel = new JTextField();
 		textFieldUsablePixel.setHorizontalAlignment(SwingConstants.TRAILING);
 		textFieldUsablePixel.setText("1.0");
-		textFieldUsablePixel.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+		textFieldUsablePixel.addKeyListener(new WaitForKeyListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

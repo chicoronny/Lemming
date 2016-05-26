@@ -35,7 +35,7 @@ public class FastMedianPanel extends ConfigurationPanel {
 		JLabel lblFrames = new JLabel("Frames");
 		
 		spinnerFrames = new JSpinner();
-		spinnerFrames.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerFrames.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -50,7 +50,7 @@ public class FastMedianPanel extends ConfigurationPanel {
 		textFieldThreshold = new JTextField();
 		textFieldThreshold.setText("10");
 		textFieldThreshold.setColumns(10);
-		textFieldThreshold.addKeyListener(new WaitForKeyListener(500, new Runnable() {
+		textFieldThreshold.addKeyListener(new WaitForKeyListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();
@@ -61,7 +61,7 @@ public class FastMedianPanel extends ConfigurationPanel {
 		
 		spinnerWindowSize = new JSpinner();
 		spinnerWindowSize.setModel(new SpinnerNumberModel(15, 1, null, 1));
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

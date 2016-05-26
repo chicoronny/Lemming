@@ -41,7 +41,7 @@ public class LocalizationPrecision3D extends Localization{
 		return sY;
 	}
 	
-	private Number getsZ(){
+	public Number getsZ(){
 		return sZ;
 	}
 	

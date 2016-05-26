@@ -25,7 +25,7 @@ public class QuadraticFitterPanel extends ConfigurationPanel {
 		JLabel lblWindowSize = new JLabel("Window Size");
 		
 		spinnerWindowSize = new JSpinner();
-		spinnerWindowSize.addChangeListener(new WaitForChangeListener(500, new Runnable() {
+		spinnerWindowSize.addChangeListener(new WaitForChangeListener(schedule, 500, new Runnable() {
 			@Override
 			public void run() {
 				fireChanged();

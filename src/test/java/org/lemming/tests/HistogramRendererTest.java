@@ -21,11 +21,11 @@ public class HistogramRendererTest {
 	public void setUp() {
 		pipe = new Manager(Executors.newCachedThreadPool());
 		
-		StoreLoader reader = new StoreLoader(new File("E:/Dropbox/Codings/storm/activations.csv"), "\t");
-		//StoreLoader reader = new StoreLoader(new File(System.getProperty("user.home") + "/Dropbox/Codings/storm/geomTable.csv"), ",");
+		//StoreLoader reader = new StoreLoader(new File("H:/Images/activations_2D.csv"), ",");
+		StoreLoader reader = new StoreLoader(new File("H:/Images/sequence-as-stack-MT2.N1-2D-Exp-MLE.csv"), "\t");
 		pipe.add(reader);
 		
-		histo = new HistogramRenderer(1024, 1024, 0, 6400, 0, 6400, -500, 500);
+		histo = new HistogramRenderer(1024, 1024, 0, 6400, 0, 6400, 0, 500);
 		pipe.add(histo);
 		pipe.linkModules(reader, histo, true, 200);
 	}

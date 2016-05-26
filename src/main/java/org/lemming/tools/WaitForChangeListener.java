@@ -1,6 +1,5 @@
 package org.lemming.tools;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +17,12 @@ public class WaitForChangeListener implements ChangeListener {
 
 	private final long delay;
 	private final Runnable command;
-	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService executor;
 	private ScheduledFuture< ? > future;
 	
 
-	public WaitForChangeListener(long delay, Runnable command) {
+	public WaitForChangeListener(ScheduledExecutorService executor, long delay, Runnable command) {
+		this.executor = executor;
 		this.delay = delay;
 		this.command = command;
 	}
