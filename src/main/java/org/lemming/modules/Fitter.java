@@ -25,6 +25,7 @@ public abstract class Fitter<T extends RealType<T>> extends AbstractModule {
 
 	protected Fitter(int halfkernel) {
 		size = halfkernel;
+		Thread.currentThread().setName(this.getClass().getSimpleName());
 	}
 	
 	public int getHalfKernel() {

@@ -41,12 +41,12 @@ import org.lemming.pipeline.Localization;
 import org.lemming.pipeline.LocalizationPrecision3D;
 import org.scijava.plugin.Plugin;
 
-public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
+public class CUDA_Gaussian_Fitter<T extends RealType<T>> extends Fitter<T> {
 	
-	private static final String NAME = "Maximum Likelihood";
-	private static final String KEY = "MLEFITTER";
-	private static final String INFO_TEXT = "<html>" + "Maximum likelihood estimation using the NVIDIA CUDA capabilities " + "</html>";
-	private static final int PARAMETER_LENGTH = 6;
+	private static final String NAME = "CUDA_Gaussian_Fitter";
+	private static final String KEY = "CUDA_GAUSSIAN";
+	private static final String INFO_TEXT = "<html>" + "Gaussian Fitter Plugin (with sx and sy) using the NVIDIA CUDA capabilities " + "</html>";
+	private static final int PARAMETER_LENGTH = 8;
 	private final int maxKernels;
 	private final FastTable<Kernel> kernelList;
 	private final CUdevice device;
@@ -54,7 +54,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	private final int numProcessors= Runtime.getRuntime().availableProcessors();
 
 	
-	public MLE_Fitter(int windowSize, int maxKernels) {
+	public CUDA_Gaussian_Fitter(int windowSize, int maxKernels) {
 		super(windowSize);
 		kernelSize = 2 * size + 1;
 		this.maxKernels = maxKernels;
@@ -104,25 +104,24 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	}
 	
 	private void processGPU(double pixelDepth){
-		final MLE_Thread t = new MLE_Thread(device, kernelList, kernelSize, kernelList.size(), PARAMETER_LENGTH, "kernel_MLEFit_sigmaxy");
+		final CudaThread t = new CudaThread(device, kernelList, kernelSize, kernelList.size(), PARAMETER_LENGTH, "kernel_LM");
 		//MLE t = new MLE(kernelList, kernelSize, kernelList.size());
 		final FutureTask<Map<String, float[]>> f = new FutureTask<>(t);
 			try {
 			f.run();
 			Map<String, float[]> res = f.get();
 			float[] par = res.get("Parameters");
-			float[] fits = res.get("LogLikelihood");
 			int ksize = kernelList.size();
 			for (int i=0;i<ksize;i++){
 				long xstart = kernelList.get(i).getRoi().min(0);
 				long ystart = kernelList.get(i).getRoi().min(1);
 				float x = par[i] + xstart;
 				float y = par[ksize+i] + ystart;
-				float intensity = par[2*ksize+i];
-				float fitI = -fits[i];
-				float bg = par[3*ksize+i];
-				float sx = par[4*ksize+i];
-				float sy = par[5*ksize+i];
+				float sx = par[2*ksize+i];
+				float sy = par[3*ksize+i];
+				float intensity = par[4*ksize+i];
+				float bg = par[5*ksize+i];
+				int fitI = (int)par[6*ksize+i];
 				long frame = kernelList.get(i).getFrame();
 				long id = kernelList.get(i).getID();
 				newOutput(new LocalizationPrecision3D(id, x*pixelDepth, y*pixelDepth, fitI, sx*pixelDepth, sy*pixelDepth, bg, intensity, frame));
@@ -207,7 +206,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		return null;
 	}
 	
-	private class MLE_Thread implements Callable<Map<String,float[]>> {
+	private class CudaThread implements Callable<Map<String,float[]>> {
 		
 		private final int sz;
 		private final int sz2;
@@ -218,12 +217,11 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		private final String functionName;
 		private int count = 0;
 		
-		private static final float PSFSigma = 1.3f;
 		private static final int iterations = 200;
-		private static final String ptxFileName = "resources/MLE.ptx";
+		private static final String ptxFileName = "resources/CUDA_GAUSS.ptx";
 		private static final float sharedMemPerBlock = 262144;
 
-		MLE_Thread(CUdevice device, List<Kernel> kernelList, int sz, int nKernels, int numParameters, String functionName) {
+		CudaThread(CUdevice device, List<Kernel> kernelList, int sz, int nKernels, int numParameters, String functionName) {
 			this.sz = sz;
 			this.sz2 = sz*sz;
 			this.device = device;
@@ -270,22 +268,15 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	        // Allocate device output memory
 	    	Pointer d_Parameters = new Pointer();
 	    	checkResult(cudaMalloc(d_Parameters, PARAMETER_LENGTH * Nfits * Sizeof.FLOAT));
-	        Pointer d_CRLBs = new Pointer();
-	        checkResult(cudaMalloc(d_CRLBs, PARAMETER_LENGTH * Nfits * Sizeof.FLOAT));
-	        Pointer d_LogLikelihood = new Pointer();
-	        checkResult(cudaMalloc(d_LogLikelihood, Nfits * Sizeof.FLOAT));
 	        
 	        // Set up the kernel parameters: A pointer to an array
 	        // __global__ void kernel_MLEFit(float *d_data, float PSFSigma, int sz, int iterations, float *d_Parameters, float *d_CRLBs, float *d_LogLikelihood, int Nfits)
 	        // of pointers which point to the actual values.
 	        Pointer kernelParameters = Pointer.to(
 	            Pointer.to(d_data),
-	            Pointer.to(new float[]{PSFSigma}),
+	            Pointer.to(d_Parameters),
 	            Pointer.to(new int[]{sz}),
 	            Pointer.to(new int[]{iterations}),
-	            Pointer.to(d_Parameters),
-	            Pointer.to(d_CRLBs),
-	            Pointer.to(d_LogLikelihood),
 	            Pointer.to(new int[]{Nfits})
 	        );
 	        
@@ -303,18 +294,11 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 	        Map<String,float[]> result = new HashMap<>();
 	        float hostParameters[] = new float[PARAMETER_LENGTH * Nfits];
 	        checkResult(cudaMemcpy(Pointer.to(hostParameters), d_Parameters, PARAMETER_LENGTH * Nfits * Sizeof.FLOAT, cudaMemcpyDeviceToHost));
-	        float hostCRLBs[] = new float[PARAMETER_LENGTH * Nfits];
-	        checkResult(cudaMemcpy(Pointer.to(hostCRLBs), d_CRLBs, PARAMETER_LENGTH * Nfits * Sizeof.FLOAT, cudaMemcpyDeviceToHost));
-	        float hostLogLikelihood[] = new float[PARAMETER_LENGTH * Nfits];
-	        checkResult(cudaMemcpy(Pointer.to(hostLogLikelihood), d_LogLikelihood, Nfits * Sizeof.FLOAT, cudaMemcpyDeviceToHost));
-	        
+	          
 	        result.put("Parameters", hostParameters);
-	        //result.put("CRLBs", hostCRLBs);
-	        result.put("LogLikelihood", hostLogLikelihood);
-	        
+        
 	        cudaFree(d_Parameters);
-	        cudaFree(d_CRLBs);
-	        cudaFree(d_LogLikelihood);
+
 	        JCudaDriver.cuCtxDestroy(context);
 	        System.out.println("count:"+ count++ +" Kernels:" + nKernels + " BlockSize:"+ BlockSize + " GridSize:" + gridSizeX +" Elapsed time in ms: "+(System.currentTimeMillis()-start));
 			return result;
@@ -365,7 +349,7 @@ public class MLE_Fitter<T extends RealType<T>> extends Fitter<T> {
 		public <T extends RealType<T>> Fitter<T> getFitter() {
 			final int windowSize = (int) settings.get(MLE_FitterPanel.KEY_WINDOW_SIZE);
 			final int maxKernels = (int) settings.get("MAXKERNELS");
-			return new MLE_Fitter<>(windowSize, maxKernels);
+			return new CUDA_Gaussian_Fitter<>(windowSize, maxKernels);
 		}
 
 		@Override

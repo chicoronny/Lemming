@@ -34,6 +34,7 @@ public class SaveLocalizations extends SingleRunModule {
 	public SaveLocalizations(File file) {
 		this.curLocale = Locale.getDefault();
 		this.file = file;
+		Thread.currentThread().setName("SaveLocalizations");
 	}
 
 	@Override

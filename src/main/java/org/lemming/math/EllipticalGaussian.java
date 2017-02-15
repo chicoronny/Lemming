@@ -30,11 +30,12 @@ class EllipticalGaussian implements OptimizationData {
 		this.ygrid = ygrid;
 	}
 	
-    private static double getValue(double[] params, double x, double y) {
-
-        return params[INDEX_I0]*Ex(x,params)*Ey(y,params)+params[INDEX_Bg];
+    private static double getValue(double[] params, int x, int y) {
+    	final double ex = Ex(x,params);
+    	final double ey = Ey(y,params);
+    	final double ret = params[INDEX_I0]*ex*ey+params[INDEX_Bg];
+        return ret;
     }
-
 	
     public MultivariateVectorFunction getModelFunction() {
         return new MultivariateVectorFunction() {
@@ -74,41 +75,45 @@ class EllipticalGaussian implements OptimizationData {
 
 	///////////////////////////////////////////////////////////////
 	// Math functions
-	private static double erf(double x) {
+	private static double erf(final double x) {
 		return Erf.erf(x);
 	}
 	
-	private static double dErf(double x){
-		return 2*FastMath.exp(-x*x)/FastMath.sqrt(FastMath.PI);
+	private static double dErf(final double v){
+		return 2*FastMath.exp(-v*v)/FastMath.sqrt(FastMath.PI);
 	}
 
-	private static double Ex(double x, double[] variables){
-		double tsx = 1/(sqrt2*variables[INDEX_SX]);
-		return 0.5*erf(tsx*(x-variables[INDEX_X0]+0.5))-0.5*erf(tsx*(x-variables[INDEX_X0]-0.5));
+	private static double Ex(final int x, double[] variables){
+		final double tsx = 1./(sqrt2*variables[INDEX_SX]);
+		final double e1 = erf(tsx*(x-variables[INDEX_X0]+0.5));
+		final double e2 = erf(tsx*(x-variables[INDEX_X0]-0.5));
+		return 0.5*e1 - 0.5*e2;
 	}
 	
-	private static double Ey(double y, double[] variables){
-		double tsy = 1/(sqrt2*variables[INDEX_SY]);
-		return 0.5*erf(tsy*(y-variables[INDEX_Y0]+0.5))-0.5*erf(tsy*(y-variables[INDEX_Y0]-0.5));
+	private static double Ey(final int y, double[] variables){
+		final double tsy = 1./(sqrt2*variables[INDEX_SY]);
+		final double e1 = erf(tsy*(y-variables[INDEX_Y0]+0.5));
+		final double e2 = erf(tsy*(y-variables[INDEX_Y0]-0.5));
+		return 0.5*e1-0.5*e2;
 	}	
 	
-	private static double dEx(double x, double[] variables){
-		double tsx = 1/(sqrt2*variables[INDEX_SX]);
+	private static double dEx(final int x, double[] variables){
+		final double tsx = 1./(sqrt2*variables[INDEX_SX]);
 		return 0.5*tsx*(dErf(tsx*(x-variables[INDEX_X0]-0.5))-dErf(tsx*(x-variables[INDEX_X0]+0.5)));
 	}
 	
-	private static double dEy(double y, double[] variables){
-		double tsy = 1/(sqrt2*variables[INDEX_SY]);
+	private static double dEy(final int y, double[] variables){
+		final double tsy = 1./(sqrt2*variables[INDEX_SY]);
 		return 0.5*tsy*(dErf(tsy*(y-variables[INDEX_Y0]-0.5))-dErf(tsy*(y-variables[INDEX_Y0]+0.5)));
 	}
 	
-	private static double dEsx(double x, double[] variables){
-		double tsx = 1/(sqrt2*variables[INDEX_SX]);
+	private static double dEsx(final int x, double[] variables){
+		final double tsx = 1./(sqrt2*variables[INDEX_SX]);
 		return 0.5*tsx*((x-variables[INDEX_X0]-0.5)*dErf(tsx*(x-variables[INDEX_X0]-0.5))-(x-variables[INDEX_X0]+0.5)*dErf(tsx*(x-variables[INDEX_X0]+0.5)))/variables[INDEX_SX];
 	}
 	
-	private static double dEsy(double y, double[] variables){
-		double tsy = 1/(sqrt2*variables[INDEX_SY]);
+	private static double dEsy(final int y, double[] variables){
+		final double tsy = 1./(sqrt2*variables[INDEX_SY]);
 		return 0.5*tsy*((y-variables[INDEX_Y0]-0.5)*dErf(tsy*(y-variables[INDEX_Y0]-0.5))-(y-variables[INDEX_Y0]+0.5)*dErf(tsy*(y-variables[INDEX_Y0]+0.5)))/variables[INDEX_SY];
 	}
 }

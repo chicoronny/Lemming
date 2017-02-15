@@ -9,6 +9,7 @@ import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optim
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.ConvergenceChecker;
 import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.util.Precision;
 
 import net.imglib2.Cursor;
 import net.imglib2.type.numeric.RealType;
@@ -44,11 +45,12 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 		maxIter = maxIter_;
 		maxEval = maxEval_;
 		bg = LemmingUtils.computeMin(interval);
+		Thread.currentThread().setName("Gaussian2DFitter");
 	}
 	
 	private void createGrids(){
-		Cursor<T> cursor = interval.cursor();
-		int arraySize=(int)(interval.dimension(0)*interval.dimension(1));
+		final Cursor<T> cursor = interval.cursor();
+		final int arraySize=(int)(interval.dimension(0)*interval.dimension(1));
 		Ival = new double[arraySize];
 		xgrid = new int[arraySize];
 		ygrid = new int[arraySize];
@@ -62,10 +64,10 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 	}
 
 	private double[] getInitialGuess(IntervalView<T> interval) {
-		double[] initialGuess = new double[PARAM_LENGTH];
+		final double[] initialGuess = new double[PARAM_LENGTH];
 
-		CentroidFitterRA<T> cf = new CentroidFitterRA<>(interval, 0);
-		double[] centroid = cf.fit();
+		final CentroidFitterRA<T> cf = new CentroidFitterRA<>(interval, 0);
+		final double[] centroid = cf.fit();
 
 		initialGuess[INDEX_X0] = centroid[INDEX_X0];
 		initialGuess[INDEX_Y0] = centroid[INDEX_Y0];
@@ -80,9 +82,10 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 	public double[] fit() {
 		createGrids();
 		final EllipticalGaussian eg = new EllipticalGaussian(xgrid, ygrid);
-		final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer();
+		final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer(0.05, 1e-10, 1e-10, 1e-10, Precision.SAFE_MIN);
 		final LeastSquaresBuilder builder = new LeastSquaresBuilder();
 		builder.model(eg.getModelFunction(), eg.getModelFunctionJacobian());
+		//builder.lazyEvaluation(true);
 		final double[] initial = getInitialGuess(interval);
 		double[] fittedEG;
 		int iter;
@@ -92,7 +95,7 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 	                .target(Ival)
 	                .checkerPair(new ConvChecker2DGauss())
                     .parameterValidator(new ParamValidator2DGauss())
-	                .start(getInitialGuess(interval))
+	                .start(initial)
 	                .maxIterations(maxIter)
 	                .maxEvaluations(maxEval)
 	                .build()
@@ -108,7 +111,7 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 		if (fittedEG[2]>5*initial[2]||fittedEG[3]>5*initial[3]) //check for extremes
 			return null;
 		
-		double[] result = new double[9];
+		final double[] result = new double[9];
 		
 		result[0] = fittedEG[INDEX_X0];
 		result[1] = fittedEG[INDEX_Y0];
@@ -123,27 +126,27 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 	}
 	
 	private static double get2DErrorX(int pixelsize, double[] fittedEG) {
-		double sigma2=2*fittedEG[INDEX_SX]*fittedEG[INDEX_SX];
-		double N = fittedEG[INDEX_I0];
-		double b = fittedEG[INDEX_Bg];
-		double a2 = pixelsize*pixelsize;
+		final double sigma2=2*fittedEG[INDEX_SX]*fittedEG[INDEX_SX];
+		final double N = fittedEG[INDEX_I0];
+		final double b = fittedEG[INDEX_Bg];
+		final double a2 = pixelsize*pixelsize;
 		
-		double t = 2*Math.PI*b*(sigma2+a2/12)/(N*a2);
+		final double t = 2*Math.PI*b*(sigma2+a2/12)/(N*a2);
 		
-		double errorx2 = (sigma2+a2/12)*(16/9+4*t)/N;
+		final double errorx2 = (sigma2+a2/12)*(16/9+4*t)/N;
 		
 		return Math.sqrt(errorx2);
 	}
 
 	private static double get2DErrorY(int pixelsize, double[] fittedEG) {
-		double sigma2=2*fittedEG[INDEX_SY]*fittedEG[INDEX_SY];
-		double N = fittedEG[INDEX_I0];
-		double b = fittedEG[INDEX_Bg];
-		double a2 = pixelsize*pixelsize;
+		final double sigma2=2*fittedEG[INDEX_SY]*fittedEG[INDEX_SY];
+		final double N = fittedEG[INDEX_I0];
+		final double b = fittedEG[INDEX_Bg];
+		final double a2 = pixelsize*pixelsize;
 		
-		double t = 2*Math.PI*b*(sigma2+a2/12)/(N*a2);
+		final double t = 2*Math.PI*b*(sigma2+a2/12)/(N*a2);
 		
-		double errory2 = (sigma2+a2/12)*(16/9+4*t)/N;
+		final double errory2 = (sigma2+a2/12)*(16/9+4*t)/N;
 		
 		return Math.sqrt(errory2);
 	}
@@ -163,18 +166,18 @@ public class Gaussian2DFitter<T extends RealType<T>> {
 			}
 			
 			iteration_ = i;
-	          double[] p = previous.getPoint();
-	          double[] c = current.getPoint();
-	          
-	          if ( Math.abs(p[INDEX_I0] - c[INDEX_I0]) < 0.01  &&
-	                  Math.abs(p[INDEX_Bg] - c[INDEX_Bg]) < 0.01 &&
-	                  Math.abs(p[INDEX_X0] - c[INDEX_X0]) < 0.001 &&
-	                  Math.abs(p[INDEX_Y0] - c[INDEX_Y0]) < 0.001 &&
-	                  Math.abs(p[INDEX_SX] - c[INDEX_SX]) < 0.002 &&
-	                  Math.abs(p[INDEX_SY] - c[INDEX_SY]) < 0.002 ) {
-	             lastResult_ = true;
-	             return true;
-	          }
+			final double[] p = previous.getPoint();
+			final double[] c = current.getPoint();
+			  
+			if ( Math.abs(p[INDEX_I0] - c[INDEX_I0]) < 0.01  &&
+			        Math.abs(p[INDEX_Bg] - c[INDEX_Bg]) < 0.01 &&
+			        Math.abs(p[INDEX_X0] - c[INDEX_X0]) < 0.001 &&
+			        Math.abs(p[INDEX_Y0] - c[INDEX_Y0]) < 0.001 &&
+			        Math.abs(p[INDEX_SX] - c[INDEX_SX]) < 0.002 &&
+			        Math.abs(p[INDEX_SY] - c[INDEX_SY]) < 0.002 ) {
+			   lastResult_ = true;
+			   return true;
+			}
 	        lastResult_ = false;
 	        return false;
 		}

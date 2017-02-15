@@ -138,7 +138,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 	private final JLabel lblFile;
 	private Manager manager;
 	private ExtendableTable table;
-	private ImageLoader<T> tif;
+	private ImageLoader tif;
 	private Map<String, Object> settings;
 	private StackWindow previewerWindow;
 	private Detector<T> detector;
@@ -663,7 +663,7 @@ public class Controller<T extends NumericType<T> & NativeType<T> & RealType<T>> 
 		}
 		if (loc_im != null) {
 			cameraProperties=LemmingUtils.readCameraSettings("camera.props");
-			tif = new ImageLoader<>(loc_im, cameraProperties);
+			tif = new ImageLoader(loc_im, cameraProperties);
 
 			previewerWindow = new StackWindow(loc_im, loc_im.getCanvas());
 			previewerWindow.addKeyListener(new KeyAdapter() {

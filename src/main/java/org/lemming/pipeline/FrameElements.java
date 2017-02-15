@@ -40,4 +40,8 @@ public class FrameElements<T> implements Element {
 	public List<Element> getList(){
 		return list;
 	}
+	
+	public String toString(){
+		return ""+frame.toString() + " " + list.toString();
+	}
 }

@@ -18,7 +18,7 @@ import org.lemming.interfaces.Store;
 import ij.IJ;
 
 /**
- * a swing worker class for background execution of the added modules.
+ * a worker class for background execution of the added modules.
  * The needed queues for data transport are created automatically.
  * 
  * @author Ronny Sczech
@@ -123,6 +123,10 @@ public class Manager{
 	}
 
 	private class Runner extends Thread{
+		
+		public Runner(){
+			Thread.currentThread().setName(this.getClass().getSimpleName());
+		}
 
 		@Override
 		public void run() {
@@ -163,6 +167,10 @@ public class Manager{
 	}
 
 	private class StoreMonitor extends Thread {
+		
+		public StoreMonitor(){
+			Thread.currentThread().setName(this.getClass().getSimpleName());
+		}
 
 		@Override
 		public void run() {

@@ -23,7 +23,7 @@ public abstract class SingleRunModule extends AbstractModule {
 			while (running) {
 				Element data = nextInput();
 				if (data != null) 
-					processData(data);
+					newOutput(processData(data));
 				else pause(10);
 			}
 			afterRun();

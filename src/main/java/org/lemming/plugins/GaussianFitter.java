@@ -46,12 +46,12 @@ public class GaussianFitter<T extends RealType<T>> extends CPU_Fitter<T> {
 		long[] imageMax = new long[2];
 		for (Element el : sliceLocs) {
 			final Localization loc = (Localization) el;
-			long x = Math.round(loc.getX().doubleValue()/pixelDepth);
-			long y = Math.round(loc.getY().doubleValue()/pixelDepth);
+			final long x = Math.round(loc.getX().doubleValue()/pixelDepth);
+			final long y = Math.round(loc.getY().doubleValue()/pixelDepth);
 			pixels.min(imageMin);
 			pixels.max(imageMax);
-			Interval roi = cropInterval(imageMin,imageMax,new long[]{x - halfKernel,y - halfKernel},new long[]{x + halfKernel,y + halfKernel});
-			Gaussian2DFitter<T> gf = new Gaussian2DFitter<>(Views.interval(pixels, roi), 200, 200);
+			final Interval roi = cropInterval(imageMin,imageMax,new long[]{x - halfKernel,y - halfKernel},new long[]{x + halfKernel,y + halfKernel});
+			final Gaussian2DFitter<T> gf = new Gaussian2DFitter<>(Views.interval(pixels, roi), 200, 200);
 			double[] result;
 			result = gf.fit();
 			if (result != null) {

@@ -61,6 +61,12 @@ public abstract class CPU_Fitter<T extends RealType<T>> extends Fitter<T> {
 					e.printStackTrace();
 				}
 			}
+			/*while (running) {
+				Element data = nextInput();
+				if (data != null) 
+					newOutput(processData(data));
+				else pause(10);
+			}*/
 			afterRun();
 			return;
 		}
